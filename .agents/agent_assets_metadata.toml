@@ -1,0 +1,8 @@
+uploads = []
+outputs = []
+
+[[generated]]
+id = "kD0h7tirydIWJnKDpK3WG"
+uri = "file://artifacts/mobile/assets/images/icon.png"
+type = "image"
+title = "jetköy app icon"

@@ -3,20 +3,28 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: JetKöy API specification
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: auth
+    description: Authentication operations
+  - name: jobs
+    description: Job pool operations
+  - name: wallet
+    description: Wallet and credit operations
+  - name: admin
+    description: Admin operations
+
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,7 +32,340 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /auth/register:
+    post:
+      operationId: registerUser
+      tags: [auth]
+      summary: Register a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterRequest"
+      responses:
+        "201":
+          description: User registered
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Phone already registered
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/login:
+    post:
+      operationId: loginUser
+      tags: [auth]
+      summary: Login with phone and password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "401":
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/me:
+    get:
+      operationId: getMe
+      tags: [auth]
+      summary: Get current user profile
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /jobs:
+    get:
+      operationId: listJobs
+      tags: [jobs]
+      summary: List available jobs in the pool
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: List of available jobs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Job"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    post:
+      operationId: createJob
+      tags: [jobs]
+      summary: Create a new job in the pool
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateJobRequest"
+      responses:
+        "201":
+          description: Job created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Job"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /jobs/{id}:
+    get:
+      operationId: getJob
+      tags: [jobs]
+      summary: Get job details
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Job details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JobDetail"
+        "404":
+          description: Job not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /jobs/{id}/grab:
+    post:
+      operationId: grabJob
+      tags: [jobs]
+      summary: Grab a job from the pool
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Job grabbed successfully with contact details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GrabJobResponse"
+        "400":
+          description: Insufficient credits or job already taken
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Job not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /jobs/my:
+    get:
+      operationId: getMyJobs
+      tags: [jobs]
+      summary: Get jobs created by current user and jobs grabbed by current user
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: My jobs summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MyJobsSummary"
+
+  /wallet:
+    get:
+      operationId: getWallet
+      tags: [wallet]
+      summary: Get current user wallet info
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Wallet info
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Wallet"
+
+  /wallet/commissions:
+    get:
+      operationId: getCommissions
+      tags: [wallet]
+      summary: Get commission records
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Commission records
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommissionSummary"
+
+  /admin/users:
+    get:
+      operationId: adminListUsers
+      tags: [admin]
+      summary: List all users (admin only)
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: All users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AdminUser"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /admin/users/{id}/credits:
+    post:
+      operationId: adminAddCredits
+      tags: [admin]
+      summary: Add credits to a user (admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AddCreditsRequest"
+      responses:
+        "200":
+          description: Credits added
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminUser"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /admin/users/{id}/vip:
+    post:
+      operationId: adminSetVip
+      tags: [admin]
+      summary: Toggle VIP status for a user (admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SetVipRequest"
+      responses:
+        "200":
+          description: VIP status updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminUser"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
   schemas:
     HealthStatus:
       type: object
@@ -34,3 +375,334 @@ components:
       required:
         - status
 
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+      required:
+        - error
+
+    RegisterRequest:
+      type: object
+      properties:
+        fullName:
+          type: string
+        phone:
+          type: string
+        plate:
+          type: string
+        password:
+          type: string
+      required:
+        - fullName
+        - phone
+        - plate
+        - password
+
+    LoginRequest:
+      type: object
+      properties:
+        phone:
+          type: string
+        password:
+          type: string
+      required:
+        - phone
+        - password
+
+    AuthResponse:
+      type: object
+      properties:
+        token:
+          type: string
+        user:
+          $ref: "#/components/schemas/User"
+      required:
+        - token
+        - user
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+        fullName:
+          type: string
+        phone:
+          type: string
+        plate:
+          type: string
+        credits:
+          type: number
+        isVip:
+          type: boolean
+        isAdmin:
+          type: boolean
+        createdAt:
+          type: string
+      required:
+        - id
+        - fullName
+        - phone
+        - plate
+        - credits
+        - isVip
+        - isAdmin
+        - createdAt
+
+    Job:
+      type: object
+      properties:
+        id:
+          type: string
+        creatorId:
+          type: string
+        creatorName:
+          type: string
+        creatorPlate:
+          type: string
+        departure:
+          type: string
+        destination:
+          type: string
+        passengerName:
+          type: string
+        passengerPhoneMasked:
+          type: string
+        totalFare:
+          type: number
+        commission:
+          type: number
+        status:
+          type: string
+          enum: [available, grabbed]
+        createdAt:
+          type: string
+      required:
+        - id
+        - creatorId
+        - creatorName
+        - creatorPlate
+        - departure
+        - destination
+        - passengerName
+        - passengerPhoneMasked
+        - totalFare
+        - commission
+        - status
+        - createdAt
+
+    JobDetail:
+      type: object
+      properties:
+        id:
+          type: string
+        creatorId:
+          type: string
+        creatorName:
+          type: string
+        creatorPlate:
+          type: string
+        departure:
+          type: string
+        destination:
+          type: string
+        passengerName:
+          type: string
+        passengerPhone:
+          type: string
+        totalFare:
+          type: number
+        commission:
+          type: number
+        status:
+          type: string
+          enum: [available, grabbed]
+        grabbedById:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+      required:
+        - id
+        - creatorId
+        - creatorName
+        - creatorPlate
+        - departure
+        - destination
+        - passengerName
+        - passengerPhone
+        - totalFare
+        - commission
+        - status
+        - createdAt
+
+    GrabJobResponse:
+      type: object
+      properties:
+        job:
+          $ref: "#/components/schemas/JobDetail"
+        passengerPhone:
+          type: string
+        newCreditBalance:
+          type: number
+      required:
+        - job
+        - passengerPhone
+        - newCreditBalance
+
+    CreateJobRequest:
+      type: object
+      properties:
+        departure:
+          type: string
+        destination:
+          type: string
+        passengerName:
+          type: string
+        passengerPhone:
+          type: string
+        totalFare:
+          type: number
+        commission:
+          type: number
+      required:
+        - departure
+        - destination
+        - passengerName
+        - passengerPhone
+        - totalFare
+        - commission
+
+    MyJobsSummary:
+      type: object
+      properties:
+        createdJobs:
+          type: array
+          items:
+            $ref: "#/components/schemas/Job"
+        grabbedJobs:
+          type: array
+          items:
+            $ref: "#/components/schemas/Job"
+      required:
+        - createdJobs
+        - grabbedJobs
+
+    Wallet:
+      type: object
+      properties:
+        credits:
+          type: number
+        totalEarned:
+          type: number
+        totalSpent:
+          type: number
+      required:
+        - credits
+        - totalEarned
+        - totalSpent
+
+    CommissionSummary:
+      type: object
+      properties:
+        receivable:
+          type: array
+          items:
+            $ref: "#/components/schemas/CommissionRecord"
+        payable:
+          type: array
+          items:
+            $ref: "#/components/schemas/CommissionRecord"
+      required:
+        - receivable
+        - payable
+
+    CommissionRecord:
+      type: object
+      properties:
+        id:
+          type: string
+        jobId:
+          type: string
+        departure:
+          type: string
+        destination:
+          type: string
+        amount:
+          type: number
+        driverName:
+          type: string
+        driverPlate:
+          type: string
+        status:
+          type: string
+          enum: [pending, paid]
+        createdAt:
+          type: string
+      required:
+        - id
+        - jobId
+        - departure
+        - destination
+        - amount
+        - driverName
+        - driverPlate
+        - status
+        - createdAt
+
+    AdminUser:
+      type: object
+      properties:
+        id:
+          type: string
+        fullName:
+          type: string
+        phone:
+          type: string
+        plate:
+          type: string
+        credits:
+          type: number
+        isVip:
+          type: boolean
+        isAdmin:
+          type: boolean
+        jobsCreated:
+          type: number
+        jobsGrabbed:
+          type: number
+        createdAt:
+          type: string
+      required:
+        - id
+        - fullName
+        - phone
+        - plate
+        - credits
+        - isVip
+        - isAdmin
+        - jobsCreated
+        - jobsGrabbed
+        - createdAt
+
+    AddCreditsRequest:
+      type: object
+      properties:
+        amount:
+          type: number
+        note:
+          type: string
+      required:
+        - amount
+
+    SetVipRequest:
+      type: object
+      properties:
+        isVip:
+          type: boolean
+      required:
+        - isVip

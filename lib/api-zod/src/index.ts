@@ -1,2 +1,22 @@
 export * from "./generated/api";
-export * from "./generated/types";
+export type {
+  AddCreditsRequest,
+  AdminUser,
+  AuthResponse,
+  CommissionRecord,
+  CommissionRecordStatus,
+  CommissionSummary,
+  CreateJobRequest,
+  ErrorResponse,
+  HealthStatus,
+  Job,
+  JobDetail,
+  JobDetailStatus,
+  JobStatus,
+  LoginRequest,
+  MyJobsSummary,
+  RegisterRequest,
+  SetVipRequest,
+  User,
+  Wallet,
+} from "./generated/types";

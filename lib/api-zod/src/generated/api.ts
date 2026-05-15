@@ -269,6 +269,71 @@ export const AdminAddCreditsResponse = zod.object({
 
 
 /**
+ * @summary Get current user's messages and admin replies
+ */
+export const GetMyMessagesResponseItem = zod.object({
+  "id": zod.string(),
+  "content": zod.string(),
+  "isRead": zod.boolean(),
+  "adminReply": zod.string().nullish(),
+  "repliedAt": zod.string().nullish(),
+  "createdAt": zod.string()
+})
+export const GetMyMessagesResponse = zod.array(GetMyMessagesResponseItem)
+
+
+/**
+ * @summary Send a message to admin
+ */
+export const SendMessageBody = zod.object({
+  "content": zod.string()
+})
+
+
+/**
+ * @summary Get all user messages (admin only)
+ */
+export const AdminGetMessagesResponseItem = zod.object({
+  "id": zod.string(),
+  "senderId": zod.string(),
+  "senderName": zod.string(),
+  "senderPhone": zod.string(),
+  "senderPlate": zod.string(),
+  "content": zod.string(),
+  "isRead": zod.boolean(),
+  "adminReply": zod.string().nullish(),
+  "repliedAt": zod.string().nullish(),
+  "createdAt": zod.string()
+})
+export const AdminGetMessagesResponse = zod.array(AdminGetMessagesResponseItem)
+
+
+/**
+ * @summary Reply to a user message (admin only)
+ */
+export const AdminReplyMessageParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+export const AdminReplyMessageBody = zod.object({
+  "reply": zod.string()
+})
+
+export const AdminReplyMessageResponse = zod.object({
+  "id": zod.string(),
+  "senderId": zod.string(),
+  "senderName": zod.string(),
+  "senderPhone": zod.string(),
+  "senderPlate": zod.string(),
+  "content": zod.string(),
+  "isRead": zod.boolean(),
+  "adminReply": zod.string().nullish(),
+  "repliedAt": zod.string().nullish(),
+  "createdAt": zod.string()
+})
+
+
+/**
  * @summary Toggle VIP status for a user (admin only)
  */
 export const AdminSetVipParams = zod.object({

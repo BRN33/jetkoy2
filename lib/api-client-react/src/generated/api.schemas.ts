@@ -162,3 +162,33 @@ export interface SetVipRequest {
   isVip: boolean;
 }
 
+export interface SendMessageRequest {
+  content: string;
+}
+
+export interface UserMessage {
+  id: string;
+  content: string;
+  isRead: boolean;
+  adminReply?: string | null;
+  repliedAt?: string | null;
+  createdAt: string;
+}
+
+export interface AdminMessage {
+  id: string;
+  senderId: string;
+  senderName: string;
+  senderPhone: string;
+  senderPlate: string;
+  content: string;
+  isRead: boolean;
+  adminReply?: string | null;
+  repliedAt?: string | null;
+  createdAt: string;
+}
+
+export interface AdminReplyRequest {
+  reply: string;
+}
+

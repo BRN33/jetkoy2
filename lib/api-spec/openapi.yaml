@@ -326,6 +326,117 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
+  /messages:
+    get:
+      operationId: getMyMessages
+      tags: [messages]
+      summary: Get current user's messages and admin replies
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: User messages
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/UserMessage"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    post:
+      operationId: sendMessage
+      tags: [messages]
+      summary: Send a message to admin
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SendMessageRequest"
+      responses:
+        "201":
+          description: Message sent
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserMessage"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /admin/messages:
+    get:
+      operationId: adminGetMessages
+      tags: [admin]
+      summary: Get all user messages (admin only)
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: All messages
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AdminMessage"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /admin/messages/{id}/reply:
+    post:
+      operationId: adminReplyMessage
+      tags: [admin]
+      summary: Reply to a user message (admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminReplyRequest"
+      responses:
+        "200":
+          description: Reply sent
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminMessage"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Message not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
   /admin/users/{id}/vip:
     post:
       operationId: adminSetVip
@@ -706,3 +817,77 @@ components:
           type: boolean
       required:
         - isVip
+
+    SendMessageRequest:
+      type: object
+      properties:
+        content:
+          type: string
+      required:
+        - content
+
+    UserMessage:
+      type: object
+      properties:
+        id:
+          type: string
+        content:
+          type: string
+        isRead:
+          type: boolean
+        adminReply:
+          type: string
+          nullable: true
+        repliedAt:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+      required:
+        - id
+        - content
+        - isRead
+        - createdAt
+
+    AdminMessage:
+      type: object
+      properties:
+        id:
+          type: string
+        senderId:
+          type: string
+        senderName:
+          type: string
+        senderPhone:
+          type: string
+        senderPlate:
+          type: string
+        content:
+          type: string
+        isRead:
+          type: boolean
+        adminReply:
+          type: string
+          nullable: true
+        repliedAt:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+      required:
+        - id
+        - senderId
+        - senderName
+        - senderPhone
+        - senderPlate
+        - content
+        - isRead
+        - createdAt
+
+    AdminReplyRequest:
+      type: object
+      properties:
+        reply:
+          type: string
+      required:
+        - reply

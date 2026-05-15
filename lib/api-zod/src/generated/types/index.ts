@@ -7,6 +7,8 @@
  */
 
 export * from './addCreditsRequest';
+export * from './adminMessage';
+export * from './adminReplyRequest';
 export * from './adminUser';
 export * from './authResponse';
 export * from './commissionRecord';
@@ -23,6 +25,8 @@ export * from './jobStatus';
 export * from './loginRequest';
 export * from './myJobsSummary';
 export * from './registerRequest';
+export * from './sendMessageRequest';
 export * from './setVipRequest';
 export * from './user';
+export * from './userMessage';
 export * from './wallet';

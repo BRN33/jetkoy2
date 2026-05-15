@@ -1,6 +1,8 @@
 export * from "./generated/api";
 export type {
   AddCreditsRequest,
+  AdminMessage,
+  AdminReplyRequest,
   AdminUser,
   AuthResponse,
   CommissionRecord,
@@ -16,7 +18,9 @@ export type {
   LoginRequest,
   MyJobsSummary,
   RegisterRequest,
+  SendMessageRequest,
   SetVipRequest,
   User,
+  UserMessage,
   Wallet,
 } from "./generated/types";

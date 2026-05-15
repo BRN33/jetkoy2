@@ -19,8 +19,11 @@ export type {
   MyJobsSummary,
   RegisterRequest,
   SendMessageRequest,
+  SendOtpRequest,
+  SendOtpResponse,
   SetVipRequest,
   User,
   UserMessage,
+  VerifyOtpRequest,
   Wallet,
 } from "./generated/types";

@@ -80,7 +80,6 @@ export default function TabLayout() {
         name="create-job"
         options={{
           href: null,
-          presentation: "modal",
         }}
       />
     </Tabs>

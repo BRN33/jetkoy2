@@ -192,3 +192,20 @@ export interface AdminReplyRequest {
   reply: string;
 }
 
+export interface SendOtpRequest {
+  phone: string;
+}
+
+export interface SendOtpResponse {
+  message: string;
+  devCode?: string | null;
+}
+
+export interface VerifyOtpRequest {
+  fullName: string;
+  phone: string;
+  plate: string;
+  password: string;
+  code: string;
+}
+

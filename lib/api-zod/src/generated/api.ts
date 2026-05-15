@@ -51,6 +51,31 @@ export const LoginUserResponse = zod.object({
 
 
 /**
+ * @summary Send a 4-digit OTP to the given phone number
+ */
+export const SendOtpBody = zod.object({
+  "phone": zod.string()
+})
+
+export const SendOtpResponse = zod.object({
+  "message": zod.string(),
+  "devCode": zod.string().nullish()
+})
+
+
+/**
+ * @summary Verify OTP and complete registration
+ */
+export const VerifyOtpBody = zod.object({
+  "fullName": zod.string(),
+  "phone": zod.string(),
+  "plate": zod.string(),
+  "password": zod.string(),
+  "code": zod.string()
+})
+
+
+/**
  * @summary Get current user profile
  */
 export const GetMeResponse = zod.object({

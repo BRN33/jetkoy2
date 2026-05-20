@@ -113,6 +113,18 @@ export const UpdateProfileResponse = zod.object({
 
 
 /**
+ * @summary Register or update Expo push token
+ */
+export const UpdatePushTokenBody = zod.object({
+  "pushToken": zod.string()
+})
+
+export const UpdatePushTokenResponse = zod.object({
+  "success": zod.boolean()
+})
+
+
+/**
  * @summary List available jobs in the pool
  */
 export const ListJobsResponseItem = zod.object({

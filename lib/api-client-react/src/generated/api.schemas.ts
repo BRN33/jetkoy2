@@ -235,3 +235,7 @@ export interface VerifyOtpRequest {
   code: string;
 }
 
+export type UpdatePushTokenBody = {
+  pushToken: string;
+};
+

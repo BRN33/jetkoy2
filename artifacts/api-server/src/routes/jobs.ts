@@ -3,6 +3,7 @@ import { db, usersTable, jobsTable, commissionsTable } from "@workspace/db";
 import { eq, and } from "drizzle-orm";
 import { CreateJobBody } from "@workspace/api-zod";
 import { requireAuth, type AuthRequest } from "../middlewares/auth";
+import { sendNewJobNotification } from "../utils/pushNotifications";
 
 const router: IRouter = Router();
 
@@ -89,6 +90,9 @@ router.post("/jobs", requireAuth, async (req: AuthRequest, res): Promise<void> =
   }
 
   const [creator] = await db.select().from(usersTable).where(eq(usersTable.id, req.userId!));
+
+  // fire-and-forget push notifications to all other users
+  sendNewJobNotification(req.userId!, parsed.data.departure, parsed.data.destination, req.log).catch(() => {});
 
   res.status(201).json(formatJob(job, { fullName: creator?.fullName ?? "", plate: creator?.plate ?? "" }, true));
 });

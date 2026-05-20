@@ -9,6 +9,7 @@ import {
   Alert,
   ScrollView,
 } from "react-native";
+import { router } from "expo-router";
 import { useGetMe, useUpdateProfile, getGetMeQueryKey } from "@workspace/api-client-react";
 import { useColors } from "@/hooks/useColors";
 import { useAuth } from "@/contexts/AuthContext";
@@ -115,6 +116,16 @@ export default function ProfileScreen() {
             <Feather name="edit-2" size={16} color={colors.primaryForeground} />
             <Text style={[styles.editBtnText, { color: colors.primaryForeground }]}>Profili Duzenle</Text>
           </Pressable>
+
+          {/* Settings / Legal Section */}
+          <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border, marginTop: 8 }]}>
+            <Text style={[styles.sectionTitle, { color: colors.mutedForeground, fontSize: 12, marginBottom: 0 }]}>UYGULAMA</Text>
+            <SettingsRow icon="shield" label="Gizlilik Politikasi" onPress={() => router.push("/(main)/privacy" as any)} colors={colors} />
+            <View style={[styles.divider, { backgroundColor: colors.border }]} />
+            <SettingsRow icon="file-text" label="Kullanim Kosullari" onPress={() => router.push("/(main)/terms" as any)} colors={colors} />
+            <View style={[styles.divider, { backgroundColor: colors.border }]} />
+            <SettingsRow icon="info" label="Hakkinda" onPress={() => router.push("/(main)/about" as any)} colors={colors} />
+          </View>
         </>
       ) : (
         <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
@@ -186,6 +197,16 @@ export default function ProfileScreen() {
   );
 }
 
+function SettingsRow({ icon, label, onPress, colors }: { icon: any; label: string; onPress: () => void; colors: any }) {
+  return (
+    <Pressable onPress={onPress} style={styles.settingsRow}>
+      <Feather name={icon} size={16} color={colors.mutedForeground} />
+      <Text style={[styles.settingsLabel, { color: colors.foreground }]}>{label}</Text>
+      <Feather name="chevron-right" size={16} color={colors.mutedForeground} />
+    </Pressable>
+  );
+}
+
 function InfoRow({
   icon,
   label,
@@ -254,4 +275,7 @@ const styles = StyleSheet.create({
   btnRow: { flexDirection: "row", gap: 12, marginTop: 8 },
   cancelBtn: { flex: 1, paddingVertical: 14, borderRadius: 12, alignItems: "center" },
   saveBtn: { flex: 1, paddingVertical: 14, borderRadius: 12, alignItems: "center" },
+  settingsRow: { flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 12 },
+  settingsLabel: { flex: 1, fontSize: 15, fontWeight: "500" },
+  divider: { height: 1, marginLeft: 28 },
 });

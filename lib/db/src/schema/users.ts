@@ -12,6 +12,7 @@ export const usersTable = pgTable("users", {
   isVip: boolean("is_vip").notNull().default(false),
   isAdmin: boolean("is_admin").notNull().default(false),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  pushToken: text("push_token"),
 });
 
 export const insertUserSchema = createInsertSchema(usersTable).omit({

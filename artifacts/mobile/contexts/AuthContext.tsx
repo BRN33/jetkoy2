@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { setAuthTokenGetter } from "@workspace/api-client-react";
 import type { User } from "@workspace/api-client-react";
+import { registerForPushNotificationsAsync } from "@/utils/notifications";
 
 interface AuthContextValue {
   token: string | null;
@@ -50,6 +51,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (e) {
       console.error("Failed to save auth", e);
     }
+    // Register push token in background (best-effort)
+    registerForPushNotificationsAsync().then(async (pushToken) => {
+      if (!pushToken) return;
+      try {
+        await fetch("/api/profile/push-token", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${newToken}` },
+          body: JSON.stringify({ pushToken }),
+        });
+      } catch {
+        // ignore
+      }
+    });
   };
 
   const logout = async () => {

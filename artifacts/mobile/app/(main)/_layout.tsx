@@ -106,12 +106,10 @@ export default function TabLayout() {
           tabBarIcon: ({ color, size }) => <Feather name="shield" size={size} color={color} />,
         }}
       />
-      <Tabs.Screen
-        name="create-job"
-        options={{
-          href: null,
-        }}
-      />
+      <Tabs.Screen name="create-job" options={{ href: null }} />
+      <Tabs.Screen name="privacy" options={{ href: null, title: "Gizlilik Politikasi" }} />
+      <Tabs.Screen name="terms" options={{ href: null, title: "Kullanim Kosullari" }} />
+      <Tabs.Screen name="about" options={{ href: null, title: "Hakkinda" }} />
     </Tabs>
   );
 }

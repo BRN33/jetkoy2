@@ -258,4 +258,14 @@ router.patch("/profile", requireAuth, async (req: AuthRequest, res): Promise<voi
   });
 });
 
+router.patch("/profile/push-token", requireAuth, async (req: AuthRequest, res): Promise<void> => {
+  const { pushToken } = req.body as { pushToken?: string };
+  if (!pushToken || typeof pushToken !== "string") {
+    res.status(400).json({ error: "Bad request", message: "pushToken gerekli" });
+    return;
+  }
+  await db.update(usersTable).set({ pushToken }).where(eq(usersTable.id, req.userId!));
+  res.json({ success: true });
+});
+
 export default router;

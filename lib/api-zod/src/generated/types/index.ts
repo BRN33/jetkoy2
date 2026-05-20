@@ -33,6 +33,7 @@ export * from './sendOtpResponse';
 export * from './setVipRequest';
 export * from './successResponse';
 export * from './updateProfileRequest';
+export * from './updatePushTokenBody';
 export * from './user';
 export * from './userMessage';
 export * from './verifyOtpRequest';

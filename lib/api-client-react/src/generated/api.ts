@@ -43,6 +43,7 @@ import type {
   SetVipRequest,
   SuccessResponse,
   UpdateProfileRequest,
+  UpdatePushTokenBody,
   User,
   UserMessage,
   VerifyOtpRequest,
@@ -568,6 +569,77 @@ export const useUpdateProfile = <TError = ErrorType<ErrorResponse>,
         TContext
       > => {
       return useMutation(getUpdateProfileMutationOptions(options));
+    }
+
+export const getUpdatePushTokenUrl = () => {
+
+
+
+
+  return `/api/profile/push-token`
+}
+
+/**
+ * @summary Register or update Expo push token
+ */
+export const updatePushToken = async (updatePushTokenBody: UpdatePushTokenBody, options?: RequestInit): Promise<SuccessResponse> => {
+
+  return customFetch<SuccessResponse>(getUpdatePushTokenUrl(),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      updatePushTokenBody,)
+  }
+);}
+
+
+
+
+export const getUpdatePushTokenMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updatePushToken>>, TError,{data: BodyType<UpdatePushTokenBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updatePushToken>>, TError,{data: BodyType<UpdatePushTokenBody>}, TContext> => {
+
+const mutationKey = ['updatePushToken'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updatePushToken>>, {data: BodyType<UpdatePushTokenBody>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  updatePushToken(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdatePushTokenMutationResult = NonNullable<Awaited<ReturnType<typeof updatePushToken>>>
+    export type UpdatePushTokenMutationBody = BodyType<UpdatePushTokenBody>
+    export type UpdatePushTokenMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Register or update Expo push token
+ */
+export const useUpdatePushToken = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updatePushToken>>, TError,{data: BodyType<UpdatePushTokenBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updatePushToken>>,
+        TError,
+        {data: BodyType<UpdatePushTokenBody>},
+        TContext
+      > => {
+      return useMutation(getUpdatePushTokenMutationOptions(options));
     }
 
 export const getListJobsUrl = () => {

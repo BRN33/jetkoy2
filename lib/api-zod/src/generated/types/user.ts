@@ -15,4 +15,5 @@ export interface User {
   isVip: boolean;
   isAdmin: boolean;
   createdAt: string;
+  avatarUrl?: string | null;
 }

@@ -5,6 +5,7 @@ import { useCreateJob, getListJobsQueryKey } from "@workspace/api-client-react";
 import { useColors } from "@/hooks/useColors";
 import { KeyboardAwareScrollViewCompat } from "@/components/KeyboardAwareScrollViewCompat";
 import { useQueryClient } from "@tanstack/react-query";
+import { AddressInput } from "@/components/AddressInput";
 
 export default function CreateJobScreen() {
   const colors = useColors();
@@ -56,17 +57,13 @@ export default function CreateJobScreen() {
         </Pressable>
       </View>
       <KeyboardAwareScrollViewCompat contentContainerStyle={styles.form}>
-        <TextInput
-          style={[styles.input, { backgroundColor: colors.input, color: colors.foreground, borderColor: colors.border }]}
+        <AddressInput
           placeholder="Kalkış Yeri"
-          placeholderTextColor={colors.mutedForeground}
           value={departure}
           onChangeText={setDeparture}
         />
-        <TextInput
-          style={[styles.input, { backgroundColor: colors.input, color: colors.foreground, borderColor: colors.border }]}
+        <AddressInput
           placeholder="Varış Yeri"
-          placeholderTextColor={colors.mutedForeground}
           value={destination}
           onChangeText={setDestination}
         />

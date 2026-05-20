@@ -99,6 +99,7 @@ router.post("/auth/verify-otp", async (req, res): Promise<void> => {
       isVip: user.isVip,
       isAdmin: user.isAdmin,
       createdAt: user.createdAt.toISOString(),
+      avatarUrl: user.avatarUrl ?? null,
     },
   });
 });
@@ -143,6 +144,7 @@ router.post("/auth/register", async (req, res): Promise<void> => {
       isVip: user.isVip,
       isAdmin: user.isAdmin,
       createdAt: user.createdAt.toISOString(),
+      avatarUrl: user.avatarUrl ?? null,
     },
   });
 });
@@ -181,6 +183,7 @@ router.post("/auth/login", async (req, res): Promise<void> => {
       isVip: user.isVip,
       isAdmin: user.isAdmin,
       createdAt: user.createdAt.toISOString(),
+      avatarUrl: user.avatarUrl ?? null,
     },
   });
 });
@@ -201,6 +204,7 @@ router.get("/auth/me", requireAuth, async (req: AuthRequest, res): Promise<void>
     isVip: user.isVip,
     isAdmin: user.isAdmin,
     createdAt: user.createdAt.toISOString(),
+    avatarUrl: user.avatarUrl ?? null,
   });
 });
 
@@ -255,7 +259,26 @@ router.patch("/profile", requireAuth, async (req: AuthRequest, res): Promise<voi
     isVip: updated.isVip,
     isAdmin: updated.isAdmin,
     createdAt: updated.createdAt.toISOString(),
+    avatarUrl: updated.avatarUrl ?? null,
   });
+});
+
+router.patch("/profile/avatar", requireAuth, async (req: AuthRequest, res): Promise<void> => {
+  const { avatarUrl } = req.body as { avatarUrl?: string };
+  if (!avatarUrl || typeof avatarUrl !== "string") {
+    res.status(400).json({ error: "Bad request", message: "avatarUrl gerekli" });
+    return;
+  }
+  const [updated] = await db
+    .update(usersTable)
+    .set({ avatarUrl })
+    .where(eq(usersTable.id, req.userId!))
+    .returning();
+  if (!updated) {
+    res.status(500).json({ error: "Internal error", message: "Guncelleme basarisiz" });
+    return;
+  }
+  res.json({ success: true, avatarUrl: updated.avatarUrl });
 });
 
 router.patch("/profile/push-token", requireAuth, async (req: AuthRequest, res): Promise<void> => {

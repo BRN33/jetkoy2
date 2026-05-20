@@ -45,7 +45,8 @@ export const LoginUserResponse = zod.object({
   "credits": zod.number(),
   "isVip": zod.boolean(),
   "isAdmin": zod.boolean(),
-  "createdAt": zod.string()
+  "createdAt": zod.string(),
+  "avatarUrl": zod.string().nullish()
 })
 })
 
@@ -86,7 +87,8 @@ export const GetMeResponse = zod.object({
   "credits": zod.number(),
   "isVip": zod.boolean(),
   "isAdmin": zod.boolean(),
-  "createdAt": zod.string()
+  "createdAt": zod.string(),
+  "avatarUrl": zod.string().nullish()
 })
 
 
@@ -108,7 +110,31 @@ export const UpdateProfileResponse = zod.object({
   "credits": zod.number(),
   "isVip": zod.boolean(),
   "isAdmin": zod.boolean(),
-  "createdAt": zod.string()
+  "createdAt": zod.string(),
+  "avatarUrl": zod.string().nullish()
+})
+
+
+/**
+ * @summary Request a presigned URL for file upload
+ */
+export const RequestUploadUrlBody = zod.object({
+  "name": zod.string(),
+  "size": zod.number(),
+  "contentType": zod.string()
+})
+
+export const RequestUploadUrlResponse = zod.object({
+  "uploadURL": zod.string(),
+  "objectPath": zod.string()
+})
+
+
+/**
+ * @summary Serve a stored object
+ */
+export const GetStorageObjectParams = zod.object({
+  "objectPath": zod.coerce.string()
 })
 
 

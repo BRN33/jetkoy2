@@ -27,6 +27,8 @@ export * from './jobStatus';
 export * from './loginRequest';
 export * from './myJobsSummary';
 export * from './registerRequest';
+export * from './requestUploadUrlBody';
+export * from './requestUploadUrlResponse';
 export * from './sendMessageRequest';
 export * from './sendOtpRequest';
 export * from './sendOtpResponse';

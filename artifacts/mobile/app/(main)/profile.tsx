@@ -8,8 +8,10 @@ import {
   ActivityIndicator,
   Alert,
   ScrollView,
+  Image,
 } from "react-native";
 import { router } from "expo-router";
+import * as ImagePicker from "expo-image-picker";
 import { useGetMe, useUpdateProfile, getGetMeQueryKey } from "@workspace/api-client-react";
 import { useColors } from "@/hooks/useColors";
 import { useAuth } from "@/contexts/AuthContext";
@@ -28,6 +30,7 @@ export default function ProfileScreen() {
   const [plate, setPlate] = useState("");
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
+  const [avatarUploading, setAvatarUploading] = useState(false);
 
   const startEdit = () => {
     setFullName(me?.fullName ?? "");
@@ -37,9 +40,7 @@ export default function ProfileScreen() {
     setEditing(true);
   };
 
-  const cancelEdit = () => {
-    setEditing(false);
-  };
+  const cancelEdit = () => setEditing(false);
 
   const handleSave = () => {
     const body: Record<string, string> = {};
@@ -53,26 +54,77 @@ export default function ProfileScreen() {
       body.currentPassword = currentPassword.trim();
       body.newPassword = newPassword.trim();
     }
-
-    if (Object.keys(body).length === 0) {
-      setEditing(false);
-      return;
-    }
+    if (Object.keys(body).length === 0) { setEditing(false); return; }
 
     updateMutation.mutate(
       { data: body },
       {
         onSuccess: (updated) => {
           queryClient.invalidateQueries({ queryKey: getGetMeQueryKey() });
-          if (token) {
-            login(token, updated);
-          }
+          if (token) login(token, updated);
           setEditing(false);
           Alert.alert("Kaydedildi", "Profiliniz guncellendi.");
         },
         onError: (err: any) => Alert.alert("Hata", err?.message || "Guncellenemedi."),
       }
     );
+  };
+
+  const handlePickAvatar = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== "granted") {
+      Alert.alert("Izin Gerekli", "Fotograf secmek icin galeri iznine ihtiyac var.");
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: "images",
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.7,
+    });
+    if (result.canceled || !result.assets[0]) return;
+
+    const asset = result.assets[0];
+    const fileName = asset.uri.split("/").pop() ?? "avatar.jpg";
+    const contentType = asset.mimeType ?? "image/jpeg";
+
+    setAvatarUploading(true);
+    try {
+      // Step 1: request presigned URL
+      const urlRes = await fetch("/api/storage/uploads/request-url", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ name: fileName, size: asset.fileSize ?? 0, contentType }),
+      });
+      if (!urlRes.ok) throw new Error("Yukleme URL alinamadi.");
+      const { uploadURL, objectPath } = await urlRes.json();
+
+      // Step 2: upload directly to GCS
+      const blob = await fetch(asset.uri).then((r) => r.blob());
+      const uploadRes = await fetch(uploadURL, {
+        method: "PUT",
+        headers: { "Content-Type": contentType },
+        body: blob,
+      });
+      if (!uploadRes.ok) throw new Error("Dosya yuklenemedi.");
+
+      // Step 3: save objectPath as avatarUrl
+      const avatarUrl = `/api/storage${objectPath}`;
+      const saveRes = await fetch("/api/profile/avatar", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ avatarUrl }),
+      });
+      if (!saveRes.ok) throw new Error("Avatar kaydedilemedi.");
+
+      queryClient.invalidateQueries({ queryKey: getGetMeQueryKey() });
+      if (token && me) login(token, { ...me, avatarUrl });
+      Alert.alert("Kaydedildi", "Profil resminiz guncellendi.");
+    } catch (err: any) {
+      Alert.alert("Hata", err?.message || "Yuklenemedi.");
+    } finally {
+      setAvatarUploading(false);
+    }
   };
 
   if (isLoading || !me) {
@@ -85,16 +137,28 @@ export default function ProfileScreen() {
 
   return (
     <ScrollView style={{ flex: 1, backgroundColor: colors.background }} contentContainerStyle={styles.container}>
-      {/* Avatar placeholder */}
-      <View style={[styles.avatar, { backgroundColor: colors.primary }]}>
-        <Text style={[styles.avatarText, { color: colors.primaryForeground }]}>
-          {me.fullName.charAt(0).toUpperCase()}
-        </Text>
-      </View>
+      {/* Avatar */}
+      <Pressable onPress={handlePickAvatar} disabled={avatarUploading} style={styles.avatarWrap}>
+        {me.avatarUrl ? (
+          <Image source={{ uri: me.avatarUrl }} style={styles.avatarImage} />
+        ) : (
+          <View style={[styles.avatar, { backgroundColor: colors.primary }]}>
+            <Text style={[styles.avatarText, { color: colors.primaryForeground }]}>
+              {me.fullName.charAt(0).toUpperCase()}
+            </Text>
+          </View>
+        )}
+        <View style={[styles.avatarBadge, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          {avatarUploading ? (
+            <ActivityIndicator size="small" color={colors.primary} />
+          ) : (
+            <Feather name="camera" size={14} color={colors.primary} />
+          )}
+        </View>
+      </Pressable>
 
       {!editing ? (
         <>
-          {/* Info cards */}
           <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <InfoRow icon="user" label="Ad Soyad" value={me.fullName} colors={colors} />
             <InfoRow icon="phone" label="Telefon" value={me.phone} colors={colors} />
@@ -109,10 +173,7 @@ export default function ProfileScreen() {
             />
           </View>
 
-          <Pressable
-            style={[styles.editBtn, { backgroundColor: colors.primary }]}
-            onPress={startEdit}
-          >
+          <Pressable style={[styles.editBtn, { backgroundColor: colors.primary }]} onPress={startEdit}>
             <Feather name="edit-2" size={16} color={colors.primaryForeground} />
             <Text style={[styles.editBtnText, { color: colors.primaryForeground }]}>Profili Duzenle</Text>
           </Pressable>
@@ -173,10 +234,7 @@ export default function ProfileScreen() {
           />
 
           <View style={styles.btnRow}>
-            <Pressable
-              style={[styles.cancelBtn, { backgroundColor: colors.secondary }]}
-              onPress={cancelEdit}
-            >
+            <Pressable style={[styles.cancelBtn, { backgroundColor: colors.secondary }]} onPress={cancelEdit}>
               <Text style={{ color: colors.secondaryForeground, fontWeight: "700" }}>Vazgec</Text>
             </Pressable>
             <Pressable
@@ -208,17 +266,9 @@ function SettingsRow({ icon, label, onPress, colors }: { icon: any; label: strin
 }
 
 function InfoRow({
-  icon,
-  label,
-  value,
-  colors,
-  highlight,
+  icon, label, value, colors, highlight,
 }: {
-  icon: any;
-  label: string;
-  value: string;
-  colors: any;
-  highlight?: boolean;
+  icon: any; label: string; value: string; colors: any; highlight?: boolean;
 }) {
   return (
     <View style={styles.infoRow}>
@@ -234,43 +284,29 @@ function InfoRow({
 const styles = StyleSheet.create({
   container: { padding: 20, paddingBottom: 60, alignItems: "center" },
   center: { flex: 1, justifyContent: "center", alignItems: "center" },
-  avatar: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+  avatarWrap: { position: "relative", marginBottom: 24 },
+  avatar: { width: 90, height: 90, borderRadius: 45, justifyContent: "center", alignItems: "center" },
+  avatarImage: { width: 90, height: 90, borderRadius: 45 },
+  avatarText: { fontSize: 36, fontWeight: "800" },
+  avatarBadge: {
+    position: "absolute",
+    bottom: 0,
+    right: 0,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    borderWidth: 2,
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 24,
   },
-  avatarText: { fontSize: 32, fontWeight: "800" },
-  card: {
-    width: "100%",
-    borderRadius: 16,
-    borderWidth: 1,
-    padding: 20,
-    gap: 12,
-    marginBottom: 20,
-  },
+  card: { width: "100%", borderRadius: 16, borderWidth: 1, padding: 20, gap: 12, marginBottom: 20 },
   infoRow: { flexDirection: "row", gap: 12, alignItems: "flex-start" },
   infoLabel: { fontSize: 12, marginBottom: 2 },
   infoValue: { fontSize: 16, fontWeight: "600" },
   sectionTitle: { fontSize: 17, fontWeight: "800", marginBottom: 4 },
   fieldLabel: { fontSize: 13, marginBottom: 4, marginTop: 4 },
-  input: {
-    height: 52,
-    borderWidth: 1,
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    fontSize: 16,
-  },
-  editBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    paddingHorizontal: 28,
-    paddingVertical: 14,
-    borderRadius: 14,
-  },
+  input: { height: 52, borderWidth: 1, borderRadius: 12, paddingHorizontal: 16, fontSize: 16 },
+  editBtn: { flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 28, paddingVertical: 14, borderRadius: 14 },
   editBtnText: { fontSize: 16, fontWeight: "700" },
   btnRow: { flexDirection: "row", gap: 12, marginTop: 8 },
   cancelBtn: { flex: 1, paddingVertical: 14, borderRadius: 12, alignItems: "center" },

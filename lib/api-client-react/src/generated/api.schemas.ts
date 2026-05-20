@@ -39,6 +39,7 @@ export interface User {
   isVip: boolean;
   isAdmin: boolean;
   createdAt: string;
+  avatarUrl?: string | null;
 }
 
 export interface AuthResponse {
@@ -225,6 +226,17 @@ export interface SendOtpRequest {
 export interface SendOtpResponse {
   message: string;
   devCode?: string | null;
+}
+
+export interface RequestUploadUrlBody {
+  name: string;
+  size: number;
+  contentType: string;
+}
+
+export interface RequestUploadUrlResponse {
+  uploadURL: string;
+  objectPath: string;
 }
 
 export interface VerifyOtpRequest {

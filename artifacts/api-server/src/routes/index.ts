@@ -5,6 +5,7 @@ import jobsRouter from "./jobs";
 import walletRouter from "./wallet";
 import adminRouter from "./admin";
 import messagesRouter from "./messages";
+import storageRouter from "./storage";
 
 const router: IRouter = Router();
 
@@ -14,5 +15,6 @@ router.use(jobsRouter);
 router.use(walletRouter);
 router.use(adminRouter);
 router.use(messagesRouter);
+router.use(storageRouter);
 
 export default router;

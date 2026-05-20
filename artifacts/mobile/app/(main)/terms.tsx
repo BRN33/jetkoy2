@@ -10,7 +10,7 @@ export default function TermsScreen() {
       <Text style={[styles.updated, { color: colors.mutedForeground }]}>Son guncelleme: Mayis 2025</Text>
 
       <Section title="1. Hizmet Tanimi" colors={colors}>
-        JetKoy, Arnavutkoy bolgesinde calismasini suruculerin birbirleriyle is paylasmasini saglayan ozel bir platformdur. Uygulama, suruculer arasinda is organizasyonu amaciyla sunulmaktadir.
+        JetKoy, suruculerin birbirleriyle is paylasmasini ve koordineli sekilde calismasini saglayan bir mobil platformdur. Uygulama, suruculer arasinda is organizasyonu amaciyla sunulmaktadir.
       </Section>
 
       <Section title="2. Kullanici Sorumlulugu" colors={colors}>

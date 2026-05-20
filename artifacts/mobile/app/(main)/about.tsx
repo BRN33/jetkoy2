@@ -16,9 +16,9 @@ export default function AboutScreen() {
       <Text style={[styles.version, { color: colors.mutedForeground }]}>Surum {APP_VERSION}</Text>
 
       <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
-        <Row icon="info" label="Amac" value="Arnavutkoy suruculeri icin is paylasim platformu" colors={colors} />
-        <Row icon="map-pin" label="Bolge" value="Arnavutkoy, Istanbul" colors={colors} />
-        <Row icon="users" label="Hedef Kitle" value="Bolgede aktif calismasini suruculer" colors={colors} />
+        <Row icon="info" label="Amac" value="Suruculer icin is paylasim ve koordinasyon platformu" colors={colors} />
+        <Row icon="users" label="Hedef Kitle" value="Aktif calismasini surucu ve operatorler" colors={colors} />
+        <Row icon="globe" label="Platform" value="Mobil (iOS & Android)" colors={colors} />
       </View>
 
       <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>

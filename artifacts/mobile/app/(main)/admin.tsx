@@ -396,13 +396,6 @@ export default function AdminScreen() {
                     <Text style={[styles.btnText, { color: colors.secondaryForeground }]}>Kredi</Text>
                   </Pressable>
                   <Pressable
-                    style={[styles.btn, { backgroundColor: colors.card, borderRadius: colors.radius, borderWidth: 1, borderColor: colors.primary }]}
-                    onPress={() => openSendMessageModal(item)}
-                  >
-                    <Feather name="send" size={14} color={colors.primary} />
-                    <Text style={[styles.btnText, { color: colors.primary }]}>Mesaj</Text>
-                  </Pressable>
-                  <Pressable
                     style={[styles.btn, { backgroundColor: colors.card, borderRadius: colors.radius, borderWidth: 1, borderColor: colors.border }]}
                     onPress={() => openEditModal(item)}
                   >

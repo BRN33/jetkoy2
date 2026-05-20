@@ -3,6 +3,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { setAuthTokenGetter } from "@workspace/api-client-react";
 import type { User } from "@workspace/api-client-react";
 import { registerForPushNotificationsAsync } from "@/utils/notifications";
+import { requestPermissionsOnce } from "@/hooks/useLocation";
 
 interface AuthContextValue {
   token: string | null;
@@ -51,6 +52,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (e) {
       console.error("Failed to save auth", e);
     }
+    // One-time: request location + notification permissions after first login
+    requestPermissionsOnce().catch(() => {});
     // Register push token in background (best-effort)
     registerForPushNotificationsAsync().then(async (pushToken) => {
       if (!pushToken) return;

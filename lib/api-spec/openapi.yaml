@@ -928,6 +928,12 @@ components:
           type: string
         destination:
           type: string
+        departureLat:
+          type: number
+          nullable: true
+        departureLng:
+          type: number
+          nullable: true
         passengerName:
           type: string
         passengerPhoneMasked:
@@ -1021,6 +1027,12 @@ components:
           type: string
         destination:
           type: string
+        departureLat:
+          type: number
+          nullable: true
+        departureLng:
+          type: number
+          nullable: true
         passengerName:
           type: string
         passengerPhone:

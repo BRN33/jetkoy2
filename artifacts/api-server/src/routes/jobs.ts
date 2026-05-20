@@ -17,6 +17,8 @@ function formatJob(job: {
   creatorId: number;
   departure: string;
   destination: string;
+  departureLat: number | null;
+  departureLng: number | null;
   passengerName: string;
   passengerPhone: string;
   totalFare: string;
@@ -32,6 +34,8 @@ function formatJob(job: {
     creatorPlate: creator.plate,
     departure: job.departure,
     destination: job.destination,
+    departureLat: job.departureLat ?? null,
+    departureLng: job.departureLng ?? null,
     passengerName: job.passengerName,
     passengerPhoneMasked: masked ? maskPhone(job.passengerPhone) : job.passengerPhone,
     totalFare: parseFloat(job.totalFare),
@@ -68,7 +72,7 @@ router.post("/jobs", requireAuth, async (req: AuthRequest, res): Promise<void> =
     return;
   }
 
-  const { departure, destination, passengerName, passengerPhone, totalFare, commission } = parsed.data;
+  const { departure, destination, departureLat, departureLng, passengerName, passengerPhone, totalFare, commission } = parsed.data;
 
   const [job] = await db
     .insert(jobsTable)
@@ -76,6 +80,8 @@ router.post("/jobs", requireAuth, async (req: AuthRequest, res): Promise<void> =
       creatorId: req.userId!,
       departure,
       destination,
+      departureLat: departureLat ?? null,
+      departureLng: departureLng ?? null,
       passengerName,
       passengerPhone,
       totalFare: String(totalFare),

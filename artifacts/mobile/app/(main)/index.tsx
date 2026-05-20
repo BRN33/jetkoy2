@@ -3,14 +3,26 @@ import { View, Text, StyleSheet, FlatList, Pressable, ActivityIndicator, Refresh
 import { useListJobs, useGrabJob, getListJobsQueryKey, getGetMeQueryKey } from "@workspace/api-client-react";
 import { useColors } from "@/hooks/useColors";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLocation } from "@/hooks/useLocation";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
 import { useQueryClient } from "@tanstack/react-query";
 
+function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const R = 6371;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLng = ((lng2 - lng1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
 export default function JobPoolScreen() {
   const colors = useColors();
   const { user } = useAuth();
+  const location = useLocation();
   const queryClient = useQueryClient();
   const { data: jobs, isLoading, refetch, isRefetching } = useListJobs({
     query: {
@@ -41,7 +53,7 @@ export default function JobPoolScreen() {
             });
           },
           onError: (err: any) => {
-            Alert.alert("Hata", err?.message || "İş kapılamadı");
+            Alert.alert("Hata", err?.message || "Is kapilamadi");
           },
         }
       );
@@ -60,6 +72,21 @@ export default function JobPoolScreen() {
 
   const pendingCount = user?.isVip ? 0 : allJobs.length - visibleJobs.length;
 
+  // Sort by distance from user if location known
+  const sortedJobs = location
+    ? [...visibleJobs].sort((a, b) => {
+        const aLat = a.departureLat;
+        const aLng = a.departureLng;
+        const bLat = b.departureLat;
+        const bLng = b.departureLng;
+        if (aLat == null || aLng == null) return 1;
+        if (bLat == null || bLng == null) return -1;
+        const dA = haversineKm(location.lat, location.lng, aLat, aLng);
+        const dB = haversineKm(location.lat, location.lng, bLat, bLng);
+        return dA - dB;
+      })
+    : visibleJobs;
+
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       {isLoading ? (
@@ -72,107 +99,130 @@ export default function JobPoolScreen() {
             <View style={[styles.pendingBanner, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
               <ActivityIndicator size="small" color={colors.primary} />
               <Text style={[styles.pendingText, { color: colors.mutedForeground }]}>
-                {pendingCount} iş bekleniyor...
+                {pendingCount} is bekleniyor...
               </Text>
             </View>
           )}
 
           <FlatList
-            data={visibleJobs}
+            data={sortedJobs}
             keyExtractor={(item) => item.id}
             contentContainerStyle={styles.listContent}
             refreshControl={
               <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={colors.primary} />
             }
             ListHeaderComponent={
-              <Pressable
-                style={({ pressed }) => [
-                  styles.shareButton,
-                  { backgroundColor: colors.primary, opacity: pressed ? 0.85 : 1 },
-                ]}
-                onPress={() => router.push("/(main)/create-job")}
-              >
-                <Feather name="plus-circle" size={20} color={colors.primaryForeground} />
-                <Text style={[styles.shareButtonText, { color: colors.primaryForeground }]}>
-                  İş Paylaş
-                </Text>
-              </Pressable>
+              <>
+                {location && (
+                  <View style={[styles.locationBanner, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                    <Feather name="map-pin" size={14} color={colors.primary} />
+                    <Text style={[styles.locationText, { color: colors.mutedForeground }]}>
+                      Yakininizdaki isler once gosteriliyor
+                    </Text>
+                  </View>
+                )}
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.shareButton,
+                    { backgroundColor: colors.primary, opacity: pressed ? 0.85 : 1 },
+                  ]}
+                  onPress={() => router.push("/(main)/create-job")}
+                >
+                  <Feather name="plus-circle" size={20} color={colors.primaryForeground} />
+                  <Text style={[styles.shareButtonText, { color: colors.primaryForeground }]}>
+                    Is Paylas
+                  </Text>
+                </Pressable>
+              </>
             }
             ListEmptyComponent={
               <View style={styles.center}>
                 <Feather name="inbox" size={48} color={colors.mutedForeground} />
                 <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>
-                  {pendingCount > 0 ? "Yeni işler geliyor..." : "Şu an iş yok"}
+                  {pendingCount > 0 ? "Yeni isler geliyor..." : "Su an is yok"}
                 </Text>
                 {pendingCount > 0 && (
                   <Text style={[styles.emptySubText, { color: colors.mutedForeground }]}>
-                    VIP olarak anında görmek ister misiniz?
+                    VIP olarak aninda gormek ister misiniz?
                   </Text>
                 )}
               </View>
             }
-            renderItem={({ item }) => (
-              <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
-                <View style={styles.cardHeader}>
-                  <View style={styles.routeContainer}>
-                    <Text style={[styles.routeText, { color: colors.foreground }]} numberOfLines={1}>
-                      {item.departure}
-                    </Text>
-                    <Feather name="arrow-right" size={16} color={colors.mutedForeground} style={{ marginHorizontal: 8 }} />
-                    <Text style={[styles.routeText, { color: colors.foreground }]} numberOfLines={1}>
-                      {item.destination}
-                    </Text>
-                  </View>
-                </View>
+            renderItem={({ item }) => {
+              const dist = location && item.departureLat != null && item.departureLng != null
+                ? haversineKm(location.lat, location.lng, item.departureLat, item.departureLng)
+                : null;
 
-                <View style={styles.detailsRow}>
-                  <View>
-                    <Text style={[styles.label, { color: colors.mutedForeground }]}>Yolcu</Text>
-                    <Text style={[styles.value, { color: colors.foreground }]}>{item.passengerName}</Text>
-                  </View>
-                  <View>
-                    <Text style={[styles.label, { color: colors.mutedForeground }]}>Telefon</Text>
-                    <Text style={[styles.value, { color: colors.foreground }]}>{item.passengerPhoneMasked}</Text>
-                  </View>
-                </View>
-
-                <View style={styles.detailsRow}>
-                  <View>
-                    <Text style={[styles.label, { color: colors.mutedForeground }]}>Oluşturan</Text>
-                    <Text style={[styles.value, { color: colors.foreground }]}>
-                      {item.creatorName} ({item.creatorPlate})
-                    </Text>
-                  </View>
-                </View>
-
-                <View style={styles.footerRow}>
-                  <View>
-                    <Text style={[styles.priceText, { color: colors.foreground }]}>{item.totalFare} TL</Text>
-                    <Text style={[styles.commissionText, { color: colors.mutedForeground }]}>
-                      Komisyon: {item.commission} TL
-                    </Text>
-                  </View>
-                  <Pressable
-                    style={({ pressed }) => [
-                      styles.grabButton,
-                      { backgroundColor: colors.primary, opacity: pressed ? 0.8 : 1 },
-                    ]}
-                    onPress={() => handleGrab(item.id)}
-                    disabled={grabMutation.isPending}
-                  >
-                    {grabMutation.isPending && grabMutation.variables?.id === item.id ? (
-                      <ActivityIndicator color={colors.primaryForeground} />
-                    ) : (
-                      <Text style={[styles.grabButtonText, { color: colors.primaryForeground }]}>İŞİ KAP</Text>
+              return (
+                <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                  <View style={styles.cardHeader}>
+                    <View style={styles.routeContainer}>
+                      <Text style={[styles.routeText, { color: colors.foreground }]} numberOfLines={1}>
+                        {item.departure}
+                      </Text>
+                      <Feather name="arrow-right" size={16} color={colors.mutedForeground} style={{ marginHorizontal: 8 }} />
+                      <Text style={[styles.routeText, { color: colors.foreground }]} numberOfLines={1}>
+                        {item.destination}
+                      </Text>
+                    </View>
+                    {dist != null && (
+                      <View style={[styles.distBadge, { backgroundColor: colors.primary + "22" }]}>
+                        <Feather name="map-pin" size={12} color={colors.primary} />
+                        <Text style={[styles.distText, { color: colors.primary }]}>
+                          {dist < 1 ? `${Math.round(dist * 1000)} m` : `${dist.toFixed(1)} km`}
+                        </Text>
+                      </View>
                     )}
-                  </Pressable>
+                  </View>
+
+                  <View style={styles.detailsRow}>
+                    <View>
+                      <Text style={[styles.label, { color: colors.mutedForeground }]}>Yolcu</Text>
+                      <Text style={[styles.value, { color: colors.foreground }]}>{item.passengerName}</Text>
+                    </View>
+                    <View>
+                      <Text style={[styles.label, { color: colors.mutedForeground }]}>Telefon</Text>
+                      <Text style={[styles.value, { color: colors.foreground }]}>{item.passengerPhoneMasked}</Text>
+                    </View>
+                  </View>
+
+                  <View style={styles.detailsRow}>
+                    <View>
+                      <Text style={[styles.label, { color: colors.mutedForeground }]}>Olusturan</Text>
+                      <Text style={[styles.value, { color: colors.foreground }]}>
+                        {item.creatorName} ({item.creatorPlate})
+                      </Text>
+                    </View>
+                  </View>
+
+                  <View style={styles.footerRow}>
+                    <View>
+                      <Text style={[styles.priceText, { color: colors.foreground }]}>{item.totalFare} TL</Text>
+                      <Text style={[styles.commissionText, { color: colors.mutedForeground }]}>
+                        Komisyon: {item.commission} TL
+                      </Text>
+                    </View>
+                    <Pressable
+                      style={({ pressed }) => [
+                        styles.grabButton,
+                        { backgroundColor: colors.primary, opacity: pressed ? 0.8 : 1 },
+                      ]}
+                      onPress={() => handleGrab(item.id)}
+                      disabled={grabMutation.isPending}
+                    >
+                      {grabMutation.isPending && grabMutation.variables?.id === item.id ? (
+                        <ActivityIndicator color={colors.primaryForeground} />
+                      ) : (
+                        <Text style={[styles.grabButtonText, { color: colors.primaryForeground }]}>ISI KAP</Text>
+                      )}
+                    </Pressable>
+                  </View>
                 </View>
-              </View>
-            )}
+              );
+            }}
           />
         </>
       )}
-
     </View>
   );
 }
@@ -192,10 +242,31 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
   },
   pendingText: { fontSize: 14 },
+  locationBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 10,
+    borderWidth: 1,
+    marginBottom: 12,
+  },
+  locationText: { fontSize: 13 },
   card: { borderWidth: 1, borderRadius: 16, padding: 16, marginBottom: 16, gap: 16 },
   cardHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
   routeContainer: { flexDirection: "row", alignItems: "center", flex: 1 },
   routeText: { fontSize: 18, fontWeight: "700", flexShrink: 1 },
+  distBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    marginLeft: 8,
+  },
+  distText: { fontSize: 12, fontWeight: "700" },
   detailsRow: { flexDirection: "row", justifyContent: "space-between" },
   label: { fontSize: 12, marginBottom: 4 },
   value: { fontSize: 14, fontWeight: "500" },

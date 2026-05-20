@@ -9,6 +9,8 @@
 export interface CreateJobRequest {
   departure: string;
   destination: string;
+  departureLat?: number | null;
+  departureLng?: number | null;
   passengerName: string;
   passengerPhone: string;
   totalFare: number;

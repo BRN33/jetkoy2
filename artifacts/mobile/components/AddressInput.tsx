@@ -13,15 +13,24 @@ import { useColors } from "@/hooks/useColors";
 interface Suggestion {
   place_id: string;
   display_name: string;
+  lat: string;
+  lon: string;
+}
+
+export interface AddressResult {
+  text: string;
+  lat: number;
+  lng: number;
 }
 
 interface Props {
   value: string;
   onChangeText: (text: string) => void;
+  onSelect?: (result: AddressResult) => void;
   placeholder?: string;
 }
 
-export function AddressInput({ value, onChangeText, placeholder }: Props) {
+export function AddressInput({ value, onChangeText, onSelect, placeholder }: Props) {
   const colors = useColors();
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [loading, setLoading] = useState(false);
@@ -40,9 +49,7 @@ export function AddressInput({ value, onChangeText, placeholder }: Props) {
       setLoading(true);
       try {
         const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(text)}&format=json&limit=5&countrycodes=tr&accept-language=tr`;
-        const res = await fetch(url, {
-          headers: { "User-Agent": "JetKoy/1.0" },
-        });
+        const res = await fetch(url, { headers: { "User-Agent": "JetKoy/1.0" } });
         const data: Suggestion[] = await res.json();
         setSuggestions(data);
         setOpen(data.length > 0);
@@ -56,9 +63,9 @@ export function AddressInput({ value, onChangeText, placeholder }: Props) {
   }, [onChangeText]);
 
   const pick = (item: Suggestion) => {
-    // Use only first two parts of display_name for brevity
     const short = item.display_name.split(",").slice(0, 2).join(",").trim();
     onChangeText(short);
+    onSelect?.({ text: short, lat: parseFloat(item.lat), lng: parseFloat(item.lon) });
     setSuggestions([]);
     setOpen(false);
   };
@@ -135,8 +142,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 6,
   },
-  item: {
-    padding: 14,
-  },
+  item: { padding: 14 },
   itemText: { fontSize: 14, lineHeight: 20 },
 });

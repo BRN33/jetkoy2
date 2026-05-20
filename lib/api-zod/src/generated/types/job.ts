@@ -14,6 +14,8 @@ export interface Job {
   creatorPlate: string;
   departure: string;
   destination: string;
+  departureLat?: number | null;
+  departureLng?: number | null;
   passengerName: string;
   passengerPhoneMasked: string;
   totalFare: number;

@@ -5,7 +5,7 @@ import { useColors } from "@/hooks/useColors";
 import { useAuth } from "@/contexts/AuthContext";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
-import { router, Link } from "expo-router";
+import { router } from "expo-router";
 import { useQueryClient } from "@tanstack/react-query";
 
 export default function JobPoolScreen() {
@@ -84,6 +84,20 @@ export default function JobPoolScreen() {
             refreshControl={
               <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={colors.primary} />
             }
+            ListHeaderComponent={
+              <Pressable
+                style={({ pressed }) => [
+                  styles.shareButton,
+                  { backgroundColor: colors.primary, opacity: pressed ? 0.85 : 1 },
+                ]}
+                onPress={() => router.push("/(main)/create-job")}
+              >
+                <Feather name="plus-circle" size={20} color={colors.primaryForeground} />
+                <Text style={[styles.shareButtonText, { color: colors.primaryForeground }]}>
+                  İş Paylaş
+                </Text>
+              </Pressable>
+            }
             ListEmptyComponent={
               <View style={styles.center}>
                 <Feather name="inbox" size={48} color={colors.mutedForeground} />
@@ -159,12 +173,6 @@ export default function JobPoolScreen() {
         </>
       )}
 
-      <Link href="/(main)/create-job" asChild>
-        <Pressable style={[styles.fab, { backgroundColor: colors.primary }]}>
-          <Feather name="plus" size={24} color={colors.primaryForeground} />
-          <Text style={[styles.fabText, { color: colors.primaryForeground }]}>İŞ PAYLAŞ</Text>
-        </Pressable>
-      </Link>
     </View>
   );
 }
@@ -202,21 +210,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   grabButtonText: { fontWeight: "800", fontSize: 16 },
-  fab: {
-    position: "absolute",
-    bottom: 24,
-    right: 24,
+  shareButton: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    borderRadius: 32,
-    gap: 8,
-    elevation: 4,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
+    justifyContent: "center",
+    gap: 10,
+    paddingVertical: 14,
+    borderRadius: 14,
+    marginBottom: 20,
   },
-  fabText: { fontWeight: "800", fontSize: 16 },
+  shareButtonText: { fontWeight: "800", fontSize: 16 },
 });

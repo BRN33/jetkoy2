@@ -30,6 +30,7 @@ export * from './sendMessageRequest';
 export * from './sendOtpRequest';
 export * from './sendOtpResponse';
 export * from './setVipRequest';
+export * from './successResponse';
 export * from './user';
 export * from './userMessage';
 export * from './verifyOtpRequest';

@@ -10,6 +10,7 @@ export const messagesTable = pgTable("messages", {
   content: text("content").notNull(),
   isRead: boolean("is_read").notNull().default(false),
   adminReply: text("admin_reply"),
+  adminKeep: boolean("admin_keep").notNull().default(false),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   repliedAt: timestamp("replied_at", { withTimezone: true }),
 });

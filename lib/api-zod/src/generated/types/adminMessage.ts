@@ -14,6 +14,7 @@ export interface AdminMessage {
   senderPlate: string;
   content: string;
   isRead: boolean;
+  adminKeep: boolean;
   adminReply?: string | null;
   repliedAt?: string | null;
   createdAt: string;

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   View,
   Text,
@@ -9,6 +9,7 @@ import {
   Modal,
   TextInput,
   Alert,
+  ScrollView,
 } from "react-native";
 import {
   useAdminListUsers,
@@ -17,6 +18,8 @@ import {
   useAdminGetMessages,
   useAdminReplyMessage,
   useAdminSendMessage,
+  useAdminDeleteMessage,
+  useAdminKeepMessage,
   getAdminListUsersQueryKey,
   getAdminGetMessagesQueryKey,
 } from "@workspace/api-client-react";
@@ -26,6 +29,16 @@ import { useQueryClient } from "@tanstack/react-query";
 
 type AdminTab = "users" | "messages";
 type UserModal = "credits" | "send-message" | null;
+
+interface ConversationUser {
+  senderId: string;
+  senderName: string;
+  senderPhone: string;
+  senderPlate: string;
+  messages: any[];
+  unreadCount: number;
+  latestAt: string;
+}
 
 export default function AdminScreen() {
   const colors = useColors();
@@ -43,6 +56,8 @@ export default function AdminScreen() {
   const setVipMutation = useAdminSetVip();
   const replyMutation = useAdminReplyMessage();
   const sendMessageMutation = useAdminSendMessage();
+  const deleteMutation = useAdminDeleteMessage();
+  const keepMutation = useAdminKeepMessage();
 
   const [search, setSearch] = useState("");
   const [selectedUser, setSelectedUser] = useState<any>(null);
@@ -53,6 +68,34 @@ export default function AdminScreen() {
 
   const [selectedMessage, setSelectedMessage] = useState<any>(null);
   const [replyText, setReplyText] = useState("");
+  const [openConversation, setOpenConversation] = useState<ConversationUser | null>(null);
+
+  // Group messages by sender
+  const conversations: ConversationUser[] = useMemo(() => {
+    if (!messages) return [];
+    const map = new Map<string, ConversationUser>();
+    for (const m of messages) {
+      const existing = map.get(m.senderId);
+      if (existing) {
+        existing.messages.push(m);
+        if (!m.isRead) existing.unreadCount++;
+        if (m.createdAt > existing.latestAt) existing.latestAt = m.createdAt;
+      } else {
+        map.set(m.senderId, {
+          senderId: m.senderId,
+          senderName: m.senderName,
+          senderPhone: m.senderPhone,
+          senderPlate: m.senderPlate,
+          messages: [m],
+          unreadCount: m.isRead ? 0 : 1,
+          latestAt: m.createdAt,
+        });
+      }
+    }
+    return Array.from(map.values()).sort(
+      (a, b) => new Date(b.latestAt).getTime() - new Date(a.latestAt).getTime()
+    );
+  }, [messages]);
 
   const filteredUsers = users?.filter(
     (u) =>
@@ -61,7 +104,7 @@ export default function AdminScreen() {
       u.plate.toLowerCase().includes(search.toLowerCase())
   );
 
-  const unreadCount = messages?.filter((m) => !m.isRead).length ?? 0;
+  const totalUnread = conversations.reduce((sum, c) => sum + c.unreadCount, 0);
 
   const openCreditsModal = (user: any) => {
     setSelectedUser(user);
@@ -125,13 +168,69 @@ export default function AdminScreen() {
     replyMutation.mutate(
       { id: selectedMessage.id, data: { reply: replyText.trim() } },
       {
-        onSuccess: () => {
+        onSuccess: (updated) => {
           queryClient.invalidateQueries({ queryKey: getAdminGetMessagesQueryKey() });
+          // update conversation in place
+          if (openConversation) {
+            setOpenConversation((prev) =>
+              prev
+                ? {
+                    ...prev,
+                    messages: prev.messages.map((m) => (m.id === updated.id ? updated : m)),
+                  }
+                : prev
+            );
+          }
           setSelectedMessage(null);
           setReplyText("");
-          Alert.alert("Gonderildi", "Yanitiniz iletildi.");
         },
         onError: (err: any) => Alert.alert("Hata", err?.message || "Yanit gonderilemedi."),
+      }
+    );
+  };
+
+  const handleDelete = (msgId: string) => {
+    Alert.alert("Sil", "Bu mesaji silmek istiyor musunuz?", [
+      { text: "Iptal", style: "cancel" },
+      {
+        text: "Sil",
+        style: "destructive",
+        onPress: () => {
+          deleteMutation.mutate(
+            { id: msgId },
+            {
+              onSuccess: () => {
+                queryClient.invalidateQueries({ queryKey: getAdminGetMessagesQueryKey() });
+                setOpenConversation((prev) =>
+                  prev
+                    ? { ...prev, messages: prev.messages.filter((m) => m.id !== msgId) }
+                    : prev
+                );
+              },
+              onError: (err: any) => Alert.alert("Hata", err?.message || "Silinemedi."),
+            }
+          );
+        },
+      },
+    ]);
+  };
+
+  const handleToggleKeep = (msg: any) => {
+    keepMutation.mutate(
+      { id: msg.id },
+      {
+        onSuccess: (updated) => {
+          queryClient.invalidateQueries({ queryKey: getAdminGetMessagesQueryKey() });
+          setOpenConversation((prev) =>
+            prev
+              ? {
+                  ...prev,
+                  messages: prev.messages.map((m) => (m.id === updated.id ? updated : m)),
+                }
+              : prev
+          );
+        },
+        onError: (err: any) => Alert.alert("Hata", err?.message || "Guncellenemedi."),
       }
     );
   };
@@ -148,6 +247,7 @@ export default function AdminScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
+      {/* Tab bar */}
       <View style={[styles.tabBar, { borderBottomColor: colors.border }]}>
         <Pressable
           style={[styles.tab, activeTab === "users" && { borderBottomColor: colors.primary }]}
@@ -166,14 +266,15 @@ export default function AdminScreen() {
           <Text style={[styles.tabText, { color: activeTab === "messages" ? colors.primary : colors.mutedForeground }]}>
             Mesajlar
           </Text>
-          {unreadCount > 0 && (
+          {totalUnread > 0 && (
             <View style={[styles.badge, { backgroundColor: colors.destructive }]}>
-              <Text style={[styles.badgeText, { color: colors.destructiveForeground }]}>{unreadCount}</Text>
+              <Text style={[styles.badgeText, { color: colors.destructiveForeground }]}>{totalUnread}</Text>
             </View>
           )}
         </Pressable>
       </View>
 
+      {/* Users tab */}
       {activeTab === "users" ? (
         <>
           <View style={[styles.searchContainer, { borderBottomColor: colors.border }]}>
@@ -241,9 +342,10 @@ export default function AdminScreen() {
           />
         </>
       ) : (
+        /* Messages tab — grouped by sender */
         <FlatList
-          data={messages ?? []}
-          keyExtractor={(item) => item.id}
+          data={conversations}
+          keyExtractor={(item) => item.senderId}
           contentContainerStyle={styles.list}
           ListEmptyComponent={
             <View style={styles.center}>
@@ -251,43 +353,132 @@ export default function AdminScreen() {
               <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>Mesaj yok</Text>
             </View>
           }
-          renderItem={({ item }) => (
-            <View style={[styles.messageCard, { backgroundColor: colors.card, borderColor: item.isRead ? colors.border : colors.primary, borderRadius: colors.radius }]}>
-              <View style={styles.messageHeader}>
-                <View>
-                  <Text style={[styles.senderName, { color: colors.foreground }]}>{item.senderName}</Text>
-                  <Text style={[styles.senderInfo, { color: colors.mutedForeground }]}>{item.senderPhone} - {item.senderPlate}</Text>
+          renderItem={({ item: conv }) => {
+            const latest = conv.messages[0];
+            return (
+              <Pressable
+                style={({ pressed }) => [
+                  styles.convCard,
+                  {
+                    backgroundColor: colors.card,
+                    borderColor: conv.unreadCount > 0 ? colors.primary : colors.border,
+                    borderRadius: colors.radius,
+                    opacity: pressed ? 0.85 : 1,
+                  },
+                ]}
+                onPress={() => setOpenConversation(conv)}
+              >
+                <View style={styles.convHeader}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.senderName, { color: colors.foreground }]}>{conv.senderName}</Text>
+                    <Text style={[styles.senderInfo, { color: colors.mutedForeground }]}>
+                      {conv.senderPhone} · {conv.senderPlate}
+                    </Text>
+                  </View>
+                  <View style={styles.convMeta}>
+                    {conv.unreadCount > 0 && (
+                      <View style={[styles.badge, { backgroundColor: colors.primary }]}>
+                        <Text style={[styles.badgeText, { color: colors.primaryForeground }]}>{conv.unreadCount}</Text>
+                      </View>
+                    )}
+                    <Text style={[styles.convCount, { color: colors.mutedForeground }]}>
+                      {conv.messages.length} mesaj
+                    </Text>
+                  </View>
                 </View>
-                <View style={styles.messageMeta}>
-                  {!item.isRead && (
-                    <View style={[styles.unreadDot, { backgroundColor: colors.primary }]} />
-                  )}
-                  <Text style={[styles.messageTime, { color: colors.mutedForeground }]}>
-                    {new Date(item.createdAt).toLocaleDateString("tr-TR")}
+                {latest && (
+                  <Text style={[styles.convPreview, { color: colors.mutedForeground }]} numberOfLines={2}>
+                    {latest.content}
                   </Text>
-                </View>
-              </View>
-
-              <Text style={[styles.messageContent, { color: colors.foreground }]}>{item.content}</Text>
-
-              {item.adminReply ? (
-                <View style={[styles.replyBox, { backgroundColor: colors.background, borderColor: colors.border }]}>
-                  <Text style={[styles.replyLabel, { color: colors.mutedForeground }]}>Yanitiniz:</Text>
-                  <Text style={[styles.replyText, { color: colors.foreground }]}>{item.adminReply}</Text>
-                </View>
-              ) : (
-                <Pressable
-                  style={[styles.replyBtn, { backgroundColor: colors.primary, borderRadius: colors.radius }]}
-                  onPress={() => { setSelectedMessage(item); setReplyText(""); }}
-                >
-                  <Feather name="corner-up-left" size={14} color={colors.primaryForeground} />
-                  <Text style={[styles.replyBtnText, { color: colors.primaryForeground }]}>Yanitla</Text>
-                </Pressable>
-              )}
-            </View>
-          )}
+                )}
+                <Text style={[styles.convTime, { color: colors.mutedForeground }]}>
+                  {latest ? new Date(latest.createdAt).toLocaleString("tr-TR") : ""}
+                </Text>
+              </Pressable>
+            );
+          }}
         />
       )}
+
+      {/* Conversation detail modal */}
+      <Modal visible={!!openConversation} animationType="slide" transparent={false}>
+        <View style={[styles.convModal, { backgroundColor: colors.background }]}>
+          <View style={[styles.convModalHeader, { borderBottomColor: colors.border }]}>
+            <Pressable onPress={() => setOpenConversation(null)} style={styles.backBtn}>
+              <Feather name="arrow-left" size={22} color={colors.foreground} />
+            </Pressable>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.convModalTitle, { color: colors.foreground }]} numberOfLines={1}>
+                {openConversation?.senderName}
+              </Text>
+              <Text style={[styles.convModalSub, { color: colors.mutedForeground }]}>
+                {openConversation?.senderPhone} · {openConversation?.senderPlate}
+              </Text>
+            </View>
+          </View>
+
+          <ScrollView contentContainerStyle={styles.convMessages}>
+            {(openConversation?.messages ?? []).map((msg) => (
+              <View
+                key={msg.id}
+                style={[
+                  styles.msgBubble,
+                  {
+                    backgroundColor: colors.card,
+                    borderColor: msg.isRead ? colors.border : colors.primary,
+                    borderRadius: colors.radius,
+                  },
+                ]}
+              >
+                <Text style={[styles.msgContent, { color: colors.foreground }]}>{msg.content}</Text>
+                <Text style={[styles.msgTime, { color: colors.mutedForeground }]}>
+                  {new Date(msg.createdAt).toLocaleString("tr-TR")}
+                </Text>
+
+                {msg.adminReply && (
+                  <View style={[styles.replyBox, { backgroundColor: colors.background, borderColor: colors.border }]}>
+                    <Text style={[styles.replyLabel, { color: colors.mutedForeground }]}>Yanitiniz:</Text>
+                    <Text style={[styles.replyText, { color: colors.foreground }]}>{msg.adminReply}</Text>
+                  </View>
+                )}
+
+                <View style={styles.msgActions}>
+                  {!msg.adminReply && (
+                    <Pressable
+                      style={[styles.smallBtn, { backgroundColor: colors.primary, borderRadius: 6 }]}
+                      onPress={() => { setSelectedMessage(msg); setReplyText(""); }}
+                    >
+                      <Feather name="corner-up-left" size={12} color={colors.primaryForeground} />
+                      <Text style={[styles.smallBtnText, { color: colors.primaryForeground }]}>Yanitla</Text>
+                    </Pressable>
+                  )}
+                  <Pressable
+                    style={[styles.smallBtn, { backgroundColor: msg.adminKeep ? colors.primary : colors.secondary, borderRadius: 6 }]}
+                    onPress={() => handleToggleKeep(msg)}
+                  >
+                    <Feather name="bookmark" size={12} color={msg.adminKeep ? colors.primaryForeground : colors.secondaryForeground} />
+                    <Text style={[styles.smallBtnText, { color: msg.adminKeep ? colors.primaryForeground : colors.secondaryForeground }]}>
+                      {msg.adminKeep ? "Koruyorum" : "Koru"}
+                    </Text>
+                  </Pressable>
+                  <Pressable
+                    style={[styles.smallBtn, { backgroundColor: colors.destructive, borderRadius: 6 }]}
+                    onPress={() => handleDelete(msg.id)}
+                  >
+                    <Feather name="trash-2" size={12} color={colors.destructiveForeground} />
+                    <Text style={[styles.smallBtnText, { color: colors.destructiveForeground }]}>Sil</Text>
+                  </Pressable>
+                </View>
+              </View>
+            ))}
+            {(openConversation?.messages ?? []).length === 0 && (
+              <View style={styles.center}>
+                <Text style={{ color: colors.mutedForeground }}>Tum mesajlar silindi</Text>
+              </View>
+            )}
+          </ScrollView>
+        </View>
+      </Modal>
 
       {/* Credits Modal */}
       <Modal visible={userModal === "credits"} animationType="slide" transparent>
@@ -404,19 +595,40 @@ const styles = StyleSheet.create({
   actions: { flexDirection: "row", gap: 8, marginTop: 4, flexWrap: "wrap" },
   btn: { flexDirection: "row", alignItems: "center", gap: 5, paddingHorizontal: 12, paddingVertical: 10 },
   btnText: { fontWeight: "700", fontSize: 13 },
-  messageCard: { padding: 16, borderWidth: 1.5, gap: 12 },
-  messageHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" },
+  // Conversation list
+  convCard: { padding: 16, borderWidth: 1.5, gap: 8 },
+  convHeader: { flexDirection: "row", alignItems: "flex-start" },
+  convMeta: { alignItems: "flex-end", gap: 4 },
+  convCount: { fontSize: 12 },
   senderName: { fontSize: 16, fontWeight: "700", marginBottom: 2 },
   senderInfo: { fontSize: 13 },
-  messageMeta: { alignItems: "flex-end", gap: 4 },
-  unreadDot: { width: 8, height: 8, borderRadius: 4 },
-  messageTime: { fontSize: 12 },
-  messageContent: { fontSize: 15, lineHeight: 22 },
-  replyBox: { padding: 12, borderRadius: 8, borderWidth: 1 },
+  convPreview: { fontSize: 14, lineHeight: 20 },
+  convTime: { fontSize: 12 },
+  // Conversation modal
+  convModal: { flex: 1 },
+  convModalHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingTop: 56,
+    paddingBottom: 16,
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    gap: 12,
+  },
+  backBtn: { padding: 4 },
+  convModalTitle: { fontSize: 17, fontWeight: "700" },
+  convModalSub: { fontSize: 13 },
+  convMessages: { padding: 16, gap: 16, paddingBottom: 40 },
+  msgBubble: { padding: 14, borderWidth: 1.5, gap: 8 },
+  msgContent: { fontSize: 15, lineHeight: 22 },
+  msgTime: { fontSize: 12 },
+  replyBox: { padding: 10, borderRadius: 8, borderWidth: 1 },
   replyLabel: { fontSize: 11, fontWeight: "700", marginBottom: 4 },
   replyText: { fontSize: 14 },
-  replyBtn: { flexDirection: "row", alignItems: "center", gap: 6, alignSelf: "flex-start", paddingHorizontal: 14, paddingVertical: 8 },
-  replyBtnText: { fontSize: 13, fontWeight: "700" },
+  msgActions: { flexDirection: "row", gap: 8, flexWrap: "wrap", marginTop: 4 },
+  smallBtn: { flexDirection: "row", alignItems: "center", gap: 5, paddingHorizontal: 10, paddingVertical: 7 },
+  smallBtnText: { fontSize: 12, fontWeight: "700" },
+  // Modals
   modalOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.6)", justifyContent: "center", padding: 24 },
   modalContent: { padding: 24, borderWidth: 1 },
   modalTitle: { fontSize: 20, fontWeight: "800", marginBottom: 8 },

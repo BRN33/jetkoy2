@@ -326,6 +326,7 @@ export const AdminGetMessagesResponseItem = zod.object({
   "senderPlate": zod.string(),
   "content": zod.string(),
   "isRead": zod.boolean(),
+  "adminKeep": zod.boolean(),
   "adminReply": zod.string().nullish(),
   "repliedAt": zod.string().nullish(),
   "createdAt": zod.string()
@@ -339,6 +340,40 @@ export const AdminGetMessagesResponse = zod.array(AdminGetMessagesResponseItem)
 export const AdminSendMessageBody = zod.object({
   "userId": zod.string(),
   "content": zod.string()
+})
+
+
+/**
+ * @summary Delete a message (admin only)
+ */
+export const AdminDeleteMessageParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+export const AdminDeleteMessageResponse = zod.object({
+  "success": zod.boolean()
+})
+
+
+/**
+ * @summary Toggle keep flag on a message (admin only)
+ */
+export const AdminKeepMessageParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+export const AdminKeepMessageResponse = zod.object({
+  "id": zod.string(),
+  "senderId": zod.string(),
+  "senderName": zod.string(),
+  "senderPhone": zod.string(),
+  "senderPlate": zod.string(),
+  "content": zod.string(),
+  "isRead": zod.boolean(),
+  "adminKeep": zod.boolean(),
+  "adminReply": zod.string().nullish(),
+  "repliedAt": zod.string().nullish(),
+  "createdAt": zod.string()
 })
 
 
@@ -361,6 +396,7 @@ export const AdminReplyMessageResponse = zod.object({
   "senderPlate": zod.string(),
   "content": zod.string(),
   "isRead": zod.boolean(),
+  "adminKeep": zod.boolean(),
   "adminReply": zod.string().nullish(),
   "repliedAt": zod.string().nullish(),
   "createdAt": zod.string()

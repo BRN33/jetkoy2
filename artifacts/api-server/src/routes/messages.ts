@@ -1,21 +1,60 @@
 import { Router, type IRouter } from "express";
 import { db, usersTable, messagesTable } from "@workspace/db";
-import { eq, desc, or, isNull } from "drizzle-orm";
+import { eq, desc, or, isNull, lt, gt, and } from "drizzle-orm";
 import { SendMessageBody, AdminReplyMessageBody, AdminSendMessageBody } from "@workspace/api-zod";
 import { requireAuth, requireAdmin, type AuthRequest } from "../middlewares/auth";
 
 const router: IRouter = Router();
 
+const TWELVE_HOURS_MS = 12 * 60 * 60 * 1000;
+
+function msgCutoff() {
+  return new Date(Date.now() - TWELVE_HOURS_MS);
+}
+
+// Scheduled cleanup: delete non-kept messages older than 12h every hour
+setInterval(async () => {
+  try {
+    await db
+      .delete(messagesTable)
+      .where(and(lt(messagesTable.createdAt, msgCutoff()), eq(messagesTable.adminKeep, false)));
+  } catch {
+    // silent
+  }
+}, 60 * 60 * 1000);
+
+function formatAdminMsg(m: typeof messagesTable.$inferSelect, sender: { fullName: string; phone: string; plate: string }) {
+  return {
+    id: String(m.id),
+    senderId: String(m.senderId),
+    senderName: sender.fullName,
+    senderPhone: sender.phone,
+    senderPlate: sender.plate,
+    content: m.content,
+    isRead: m.isRead,
+    adminKeep: m.adminKeep,
+    adminReply: m.adminReply ?? null,
+    repliedAt: m.repliedAt ? m.repliedAt.toISOString() : null,
+    createdAt: m.createdAt.toISOString(),
+  };
+}
+
+// GET /messages — user sees only messages < 12h old
 router.get("/messages", requireAuth, async (req: AuthRequest, res): Promise<void> => {
   const userId = req.userId!;
+  const cutoff = msgCutoff();
 
   const msgs = await db
     .select()
     .from(messagesTable)
     .where(
-      or(
-        eq(messagesTable.senderId, userId),
-        eq(messagesTable.recipientId, userId)
+      and(
+        or(
+          eq(messagesTable.senderId, userId),
+          eq(messagesTable.recipientId, userId)
+        ),
+        // only show messages newer than 12h
+        gt(messagesTable.createdAt, cutoff)
       )
     )
     .orderBy(desc(messagesTable.createdAt));
@@ -33,6 +72,7 @@ router.get("/messages", requireAuth, async (req: AuthRequest, res): Promise<void
   );
 });
 
+// POST /messages — user sends message to admin
 router.post("/messages", requireAuth, async (req: AuthRequest, res): Promise<void> => {
   const parsed = SendMessageBody.safeParse(req.body);
   if (!parsed.success) {
@@ -61,7 +101,10 @@ router.post("/messages", requireAuth, async (req: AuthRequest, res): Promise<voi
   });
 });
 
+// GET /admin/messages — admin sees messages < 12h OR adminKeep=true
 router.get("/admin/messages", requireAdmin, async (_req, res): Promise<void> => {
+  const cutoff = msgCutoff();
+
   const msgs = await db
     .select({
       msg: messagesTable,
@@ -73,25 +116,21 @@ router.get("/admin/messages", requireAdmin, async (_req, res): Promise<void> => 
     })
     .from(messagesTable)
     .innerJoin(usersTable, eq(messagesTable.senderId, usersTable.id))
-    .where(isNull(messagesTable.recipientId))
+    .where(
+      and(
+        isNull(messagesTable.recipientId),
+        or(
+          eq(messagesTable.adminKeep, true),
+          gt(messagesTable.createdAt, cutoff)
+        )
+      )
+    )
     .orderBy(desc(messagesTable.createdAt));
 
-  res.json(
-    msgs.map((m) => ({
-      id: String(m.msg.id),
-      senderId: String(m.msg.senderId),
-      senderName: m.sender.fullName,
-      senderPhone: m.sender.phone,
-      senderPlate: m.sender.plate,
-      content: m.msg.content,
-      isRead: m.msg.isRead,
-      adminReply: m.msg.adminReply ?? null,
-      repliedAt: m.msg.repliedAt ? m.msg.repliedAt.toISOString() : null,
-      createdAt: m.msg.createdAt.toISOString(),
-    }))
-  );
+  res.json(msgs.map((m) => formatAdminMsg(m.msg, m.sender)));
 });
 
+// POST /admin/messages/send — admin sends message to a user
 router.post("/admin/messages/send", requireAdmin, async (req: AuthRequest, res): Promise<void> => {
   const parsed = AdminSendMessageBody.safeParse(req.body);
   if (!parsed.success) {
@@ -123,20 +162,68 @@ router.post("/admin/messages/send", requireAdmin, async (req: AuthRequest, res):
 
   const [adminUser] = await db.select().from(usersTable).where(eq(usersTable.id, req.userId!));
 
-  res.status(201).json({
-    id: String(msg.id),
-    senderId: String(msg.senderId),
-    senderName: adminUser?.fullName ?? "Admin",
-    senderPhone: adminUser?.phone ?? "",
-    senderPlate: adminUser?.plate ?? "",
-    content: msg.content,
-    isRead: msg.isRead,
-    adminReply: msg.adminReply ?? null,
-    repliedAt: msg.repliedAt ? msg.repliedAt.toISOString() : null,
-    createdAt: msg.createdAt.toISOString(),
-  });
+  res.status(201).json(
+    formatAdminMsg(msg, {
+      fullName: adminUser?.fullName ?? "Admin",
+      phone: adminUser?.phone ?? "",
+      plate: adminUser?.plate ?? "",
+    })
+  );
 });
 
+// POST /admin/messages/:id/delete — admin deletes a message
+router.post("/admin/messages/:id/delete", requireAdmin, async (req, res): Promise<void> => {
+  const idRaw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+  const id = parseInt(idRaw ?? "", 10);
+  if (isNaN(id)) {
+    res.status(400).json({ error: "Bad request", message: "Geçersiz mesaj ID" });
+    return;
+  }
+
+  const [existing] = await db.select().from(messagesTable).where(eq(messagesTable.id, id));
+  if (!existing) {
+    res.status(404).json({ error: "Not found", message: "Mesaj bulunamadı" });
+    return;
+  }
+
+  await db.delete(messagesTable).where(eq(messagesTable.id, id));
+
+  res.json({ success: true });
+});
+
+// POST /admin/messages/:id/keep — toggle adminKeep
+router.post("/admin/messages/:id/keep", requireAdmin, async (req, res): Promise<void> => {
+  const idRaw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+  const id = parseInt(idRaw ?? "", 10);
+  if (isNaN(id)) {
+    res.status(400).json({ error: "Bad request", message: "Geçersiz mesaj ID" });
+    return;
+  }
+
+  const [existing] = await db.select().from(messagesTable).where(eq(messagesTable.id, id));
+  if (!existing) {
+    res.status(404).json({ error: "Not found", message: "Mesaj bulunamadı" });
+    return;
+  }
+
+  const [updated] = await db
+    .update(messagesTable)
+    .set({ adminKeep: !existing.adminKeep })
+    .where(eq(messagesTable.id, id))
+    .returning();
+
+  const [sender] = await db.select().from(usersTable).where(eq(usersTable.id, existing.senderId));
+
+  res.json(
+    formatAdminMsg(updated!, {
+      fullName: sender?.fullName ?? "",
+      phone: sender?.phone ?? "",
+      plate: sender?.plate ?? "",
+    })
+  );
+});
+
+// POST /admin/messages/:id/reply — admin replies to a message
 router.post("/admin/messages/:id/reply", requireAdmin, async (req: AuthRequest, res): Promise<void> => {
   const idRaw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
   const id = parseInt(idRaw ?? "", 10);
@@ -165,18 +252,13 @@ router.post("/admin/messages/:id/reply", requireAdmin, async (req: AuthRequest, 
 
   const [sender] = await db.select().from(usersTable).where(eq(usersTable.id, existing.senderId));
 
-  res.json({
-    id: String(updated!.id),
-    senderId: String(updated!.senderId),
-    senderName: sender?.fullName ?? "",
-    senderPhone: sender?.phone ?? "",
-    senderPlate: sender?.plate ?? "",
-    content: updated!.content,
-    isRead: updated!.isRead,
-    adminReply: updated!.adminReply ?? null,
-    repliedAt: updated!.repliedAt ? updated!.repliedAt.toISOString() : null,
-    createdAt: updated!.createdAt.toISOString(),
-  });
+  res.json(
+    formatAdminMsg(updated!, {
+      fullName: sender?.fullName ?? "",
+      phone: sender?.phone ?? "",
+      plate: sender?.plate ?? "",
+    })
+  );
 });
 
 export default router;

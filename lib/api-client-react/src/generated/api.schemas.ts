@@ -5,6 +5,10 @@
  * JetKöy API specification
  * OpenAPI spec version: 0.1.0
  */
+export interface SuccessResponse {
+  success: boolean;
+}
+
 export interface HealthStatus {
   status: string;
 }
@@ -183,6 +187,7 @@ export interface AdminMessage {
   senderPlate: string;
   content: string;
   isRead: boolean;
+  adminKeep: boolean;
   adminReply?: string | null;
   repliedAt?: string | null;
   createdAt: string;

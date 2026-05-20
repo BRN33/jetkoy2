@@ -40,6 +40,7 @@ import type {
   SendOtpRequest,
   SendOtpResponse,
   SetVipRequest,
+  SuccessResponse,
   User,
   UserMessage,
   VerifyOtpRequest,
@@ -1465,6 +1466,146 @@ export const useAdminSendMessage = <TError = ErrorType<ErrorResponse>,
         TContext
       > => {
       return useMutation(getAdminSendMessageMutationOptions(options));
+    }
+
+export const getAdminDeleteMessageUrl = (id: string,) => {
+
+
+
+
+  return `/api/admin/messages/${id}/delete`
+}
+
+/**
+ * @summary Delete a message (admin only)
+ */
+export const adminDeleteMessage = async (id: string, options?: RequestInit): Promise<SuccessResponse> => {
+
+  return customFetch<SuccessResponse>(getAdminDeleteMessageUrl(id),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+export const getAdminDeleteMessageMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminDeleteMessage>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof adminDeleteMessage>>, TError,{id: string}, TContext> => {
+
+const mutationKey = ['adminDeleteMessage'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof adminDeleteMessage>>, {id: string}> = (props) => {
+          const {id} = props ?? {};
+
+          return  adminDeleteMessage(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AdminDeleteMessageMutationResult = NonNullable<Awaited<ReturnType<typeof adminDeleteMessage>>>
+
+    export type AdminDeleteMessageMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Delete a message (admin only)
+ */
+export const useAdminDeleteMessage = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminDeleteMessage>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof adminDeleteMessage>>,
+        TError,
+        {id: string},
+        TContext
+      > => {
+      return useMutation(getAdminDeleteMessageMutationOptions(options));
+    }
+
+export const getAdminKeepMessageUrl = (id: string,) => {
+
+
+
+
+  return `/api/admin/messages/${id}/keep`
+}
+
+/**
+ * @summary Toggle keep flag on a message (admin only)
+ */
+export const adminKeepMessage = async (id: string, options?: RequestInit): Promise<AdminMessage> => {
+
+  return customFetch<AdminMessage>(getAdminKeepMessageUrl(id),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+export const getAdminKeepMessageMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminKeepMessage>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof adminKeepMessage>>, TError,{id: string}, TContext> => {
+
+const mutationKey = ['adminKeepMessage'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof adminKeepMessage>>, {id: string}> = (props) => {
+          const {id} = props ?? {};
+
+          return  adminKeepMessage(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AdminKeepMessageMutationResult = NonNullable<Awaited<ReturnType<typeof adminKeepMessage>>>
+
+    export type AdminKeepMessageMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Toggle keep flag on a message (admin only)
+ */
+export const useAdminKeepMessage = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminKeepMessage>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof adminKeepMessage>>,
+        TError,
+        {id: string},
+        TContext
+      > => {
+      return useMutation(getAdminKeepMessageMutationOptions(options));
     }
 
 export const getAdminReplyMessageUrl = (id: string,) => {

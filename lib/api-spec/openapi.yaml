@@ -487,6 +487,72 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
+  /admin/messages/{id}/delete:
+    post:
+      operationId: adminDeleteMessage
+      tags: [admin]
+      summary: Delete a message (admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Message deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Message not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /admin/messages/{id}/keep:
+    post:
+      operationId: adminKeepMessage
+      tags: [admin]
+      summary: Toggle keep flag on a message (admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Keep flag toggled
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminMessage"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Message not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
   /admin/messages/{id}/reply:
     post:
       operationId: adminReplyMessage
@@ -567,6 +633,14 @@ components:
       bearerFormat: JWT
 
   schemas:
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+      required:
+        - success
+
     HealthStatus:
       type: object
       properties:
@@ -955,6 +1029,8 @@ components:
           type: string
         isRead:
           type: boolean
+        adminKeep:
+          type: boolean
         adminReply:
           type: string
           nullable: true
@@ -971,6 +1047,7 @@ components:
         - senderPlate
         - content
         - isRead
+        - adminKeep
         - createdAt
 
     AdminReplyRequest:

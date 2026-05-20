@@ -78,7 +78,7 @@ router.post("/auth/verify-otp", async (req, res): Promise<void> => {
 
   const [user] = await db
     .insert(usersTable)
-    .values({ fullName, phone, plate, passwordHash, credits: 0, isVip: false, isAdmin: false })
+    .values({ fullName, phone, plate, passwordHash, credits: 50, isVip: false, isAdmin: false })
     .returning();
 
   if (!user) {
@@ -122,7 +122,7 @@ router.post("/auth/register", async (req, res): Promise<void> => {
 
   const [user] = await db
     .insert(usersTable)
-    .values({ fullName, phone, plate, passwordHash, credits: 0, isVip: false, isAdmin: false })
+    .values({ fullName, phone, plate, passwordHash, credits: 50, isVip: false, isAdmin: false })
     .returning();
 
   if (!user) {

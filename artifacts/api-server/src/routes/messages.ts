@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { db, usersTable, messagesTable } from "@workspace/db";
-import { eq, desc, or } from "drizzle-orm";
+import { eq, desc, or, isNull } from "drizzle-orm";
 import { SendMessageBody, AdminReplyMessageBody, AdminSendMessageBody } from "@workspace/api-zod";
 import { requireAuth, requireAdmin, type AuthRequest } from "../middlewares/auth";
 
@@ -73,7 +73,7 @@ router.get("/admin/messages", requireAdmin, async (_req, res): Promise<void> => 
     })
     .from(messagesTable)
     .innerJoin(usersTable, eq(messagesTable.senderId, usersTable.id))
-    .where(eq(messagesTable.recipientId, null as any))
+    .where(isNull(messagesTable.recipientId))
     .orderBy(desc(messagesTable.createdAt));
 
   res.json(

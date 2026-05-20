@@ -334,6 +334,15 @@ export const AdminGetMessagesResponse = zod.array(AdminGetMessagesResponseItem)
 
 
 /**
+ * @summary Send a message to a specific user (admin only)
+ */
+export const AdminSendMessageBody = zod.object({
+  "userId": zod.string(),
+  "content": zod.string()
+})
+
+
+/**
  * @summary Reply to a user message (admin only)
  */
 export const AdminReplyMessageParams = zod.object({

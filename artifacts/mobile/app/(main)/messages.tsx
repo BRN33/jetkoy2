@@ -26,7 +26,10 @@ export default function MessagesScreen() {
   const [content, setContent] = useState("");
 
   const { data: messages, isLoading, refetch, isRefetching } = useGetMyMessages({
-    query: { queryKey: getGetMyMessagesQueryKey() },
+    query: {
+      queryKey: getGetMyMessagesQueryKey(),
+      refetchInterval: 8000,
+    },
   });
   const sendMutation = useSendMessage();
 
@@ -72,33 +75,51 @@ export default function MessagesScreen() {
               </Text>
             </View>
           }
-          renderItem={({ item }) => (
-            <View style={styles.messageGroup}>
-              <View style={[styles.bubble, styles.userBubble, { backgroundColor: colors.primary }]}>
-                <Text style={[styles.bubbleText, { color: colors.primaryForeground }]}>{item.content}</Text>
-                <Text style={[styles.bubbleTime, { color: colors.primaryForeground + "99" }]}>
-                  {new Date(item.createdAt).toLocaleString("tr-TR")}
-                </Text>
-              </View>
+          renderItem={({ item }) => {
+            const isFromAdmin = (item as any).fromAdmin === true;
 
-              {item.adminReply ? (
-                <View style={[styles.bubble, styles.adminBubble, { backgroundColor: colors.card, borderColor: colors.border }]}>
-                  <Text style={[styles.adminLabel, { color: colors.mutedForeground }]}>Admin</Text>
-                  <Text style={[styles.bubbleText, { color: colors.foreground }]}>{item.adminReply}</Text>
-                  {item.repliedAt && (
+            if (isFromAdmin) {
+              return (
+                <View style={styles.messageGroup}>
+                  <View style={[styles.bubble, styles.adminInitBubble, { backgroundColor: colors.card, borderColor: colors.primary }]}>
+                    <Text style={[styles.adminBadge, { color: colors.primary }]}>Admin</Text>
+                    <Text style={[styles.bubbleText, { color: colors.foreground }]}>{item.content}</Text>
                     <Text style={[styles.bubbleTime, { color: colors.mutedForeground }]}>
-                      {new Date(item.repliedAt).toLocaleString("tr-TR")}
+                      {new Date(item.createdAt).toLocaleString("tr-TR")}
                     </Text>
-                  )}
+                  </View>
                 </View>
-              ) : (
-                <View style={[styles.pendingRow]}>
-                  <Feather name="clock" size={12} color={colors.mutedForeground} />
-                  <Text style={[styles.pendingText, { color: colors.mutedForeground }]}>Yanıt bekleniyor</Text>
+              );
+            }
+
+            return (
+              <View style={styles.messageGroup}>
+                <View style={[styles.bubble, styles.userBubble, { backgroundColor: colors.primary }]}>
+                  <Text style={[styles.bubbleText, { color: colors.primaryForeground }]}>{item.content}</Text>
+                  <Text style={[styles.bubbleTime, { color: colors.primaryForeground + "99" }]}>
+                    {new Date(item.createdAt).toLocaleString("tr-TR")}
+                  </Text>
                 </View>
-              )}
-            </View>
-          )}
+
+                {item.adminReply ? (
+                  <View style={[styles.bubble, styles.adminBubble, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                    <Text style={[styles.adminLabel, { color: colors.mutedForeground }]}>Admin</Text>
+                    <Text style={[styles.bubbleText, { color: colors.foreground }]}>{item.adminReply}</Text>
+                    {item.repliedAt && (
+                      <Text style={[styles.bubbleTime, { color: colors.mutedForeground }]}>
+                        {new Date(item.repliedAt).toLocaleString("tr-TR")}
+                      </Text>
+                    )}
+                  </View>
+                ) : (
+                  <View style={styles.pendingRow}>
+                    <Feather name="clock" size={12} color={colors.mutedForeground} />
+                    <Text style={[styles.pendingText, { color: colors.mutedForeground }]}>Yanıt bekleniyor</Text>
+                  </View>
+                )}
+              </View>
+            );
+          }}
         />
       )}
 
@@ -145,6 +166,8 @@ const styles = StyleSheet.create({
   bubble: { maxWidth: "80%", padding: 14, borderRadius: 16 },
   userBubble: { alignSelf: "flex-end", borderBottomRightRadius: 4 },
   adminBubble: { alignSelf: "flex-start", borderBottomLeftRadius: 4, borderWidth: 1 },
+  adminInitBubble: { alignSelf: "flex-start", borderBottomLeftRadius: 4, borderWidth: 1.5 },
+  adminBadge: { fontSize: 11, fontWeight: "800", marginBottom: 4 },
   adminLabel: { fontSize: 11, fontWeight: "700", marginBottom: 4 },
   bubbleText: { fontSize: 15, lineHeight: 22 },
   bubbleTime: { fontSize: 11, marginTop: 4, textAlign: "right" },

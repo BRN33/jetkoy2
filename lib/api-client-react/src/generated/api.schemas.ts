@@ -192,6 +192,11 @@ export interface AdminReplyRequest {
   reply: string;
 }
 
+export interface AdminSendMessageRequest {
+  userId: string;
+  content: string;
+}
+
 export interface SendOtpRequest {
   phone: string;
 }

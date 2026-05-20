@@ -23,6 +23,7 @@ import type {
   AddCreditsRequest,
   AdminMessage,
   AdminReplyRequest,
+  AdminSendMessageRequest,
   AdminUser,
   AuthResponse,
   CommissionSummary,
@@ -1394,6 +1395,77 @@ export function useAdminGetMessages<TData = Awaited<ReturnType<typeof adminGetMe
 
 
 
+
+export const getAdminSendMessageUrl = () => {
+
+
+
+
+  return `/api/admin/messages/send`
+}
+
+/**
+ * @summary Send a message to a specific user (admin only)
+ */
+export const adminSendMessage = async (adminSendMessageRequest: AdminSendMessageRequest, options?: RequestInit): Promise<AdminMessage> => {
+
+  return customFetch<AdminMessage>(getAdminSendMessageUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      adminSendMessageRequest,)
+  }
+);}
+
+
+
+
+export const getAdminSendMessageMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminSendMessage>>, TError,{data: BodyType<AdminSendMessageRequest>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof adminSendMessage>>, TError,{data: BodyType<AdminSendMessageRequest>}, TContext> => {
+
+const mutationKey = ['adminSendMessage'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof adminSendMessage>>, {data: BodyType<AdminSendMessageRequest>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  adminSendMessage(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AdminSendMessageMutationResult = NonNullable<Awaited<ReturnType<typeof adminSendMessage>>>
+    export type AdminSendMessageMutationBody = BodyType<AdminSendMessageRequest>
+    export type AdminSendMessageMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Send a message to a specific user (admin only)
+ */
+export const useAdminSendMessage = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminSendMessage>>, TError,{data: BodyType<AdminSendMessageRequest>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof adminSendMessage>>,
+        TError,
+        {data: BodyType<AdminSendMessageRequest>},
+        TContext
+      > => {
+      return useMutation(getAdminSendMessageMutationOptions(options));
+    }
 
 export const getAdminReplyMessageUrl = (id: string,) => {
 

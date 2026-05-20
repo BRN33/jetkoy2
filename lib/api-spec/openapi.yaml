@@ -460,6 +460,33 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
+  /admin/messages/send:
+    post:
+      operationId: adminSendMessage
+      tags: [admin]
+      summary: Send a message to a specific user (admin only)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminSendMessageRequest"
+      responses:
+        "201":
+          description: Message sent
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminMessage"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
   /admin/messages/{id}/reply:
     post:
       operationId: adminReplyMessage
@@ -953,6 +980,17 @@ components:
           type: string
       required:
         - reply
+
+    AdminSendMessageRequest:
+      type: object
+      properties:
+        userId:
+          type: string
+        content:
+          type: string
+      required:
+        - userId
+        - content
 
     SendOtpRequest:
       type: object

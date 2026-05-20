@@ -3,6 +3,7 @@ export type {
   AddCreditsRequest,
   AdminMessage,
   AdminReplyRequest,
+  AdminSendMessageRequest,
   AdminUser,
   AuthResponse,
   CommissionRecord,

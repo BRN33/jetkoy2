@@ -1,16 +1,23 @@
 import { Router, type IRouter } from "express";
 import { db, usersTable, messagesTable } from "@workspace/db";
-import { eq, desc } from "drizzle-orm";
-import { SendMessageBody, AdminReplyMessageBody } from "@workspace/api-zod";
+import { eq, desc, or } from "drizzle-orm";
+import { SendMessageBody, AdminReplyMessageBody, AdminSendMessageBody } from "@workspace/api-zod";
 import { requireAuth, requireAdmin, type AuthRequest } from "../middlewares/auth";
 
 const router: IRouter = Router();
 
 router.get("/messages", requireAuth, async (req: AuthRequest, res): Promise<void> => {
+  const userId = req.userId!;
+
   const msgs = await db
     .select()
     .from(messagesTable)
-    .where(eq(messagesTable.senderId, req.userId!))
+    .where(
+      or(
+        eq(messagesTable.senderId, userId),
+        eq(messagesTable.recipientId, userId)
+      )
+    )
     .orderBy(desc(messagesTable.createdAt));
 
   res.json(
@@ -21,6 +28,7 @@ router.get("/messages", requireAuth, async (req: AuthRequest, res): Promise<void
       adminReply: m.adminReply ?? null,
       repliedAt: m.repliedAt ? m.repliedAt.toISOString() : null,
       createdAt: m.createdAt.toISOString(),
+      fromAdmin: m.recipientId === userId,
     }))
   );
 });
@@ -49,6 +57,7 @@ router.post("/messages", requireAuth, async (req: AuthRequest, res): Promise<voi
     adminReply: msg.adminReply ?? null,
     repliedAt: msg.repliedAt ? msg.repliedAt.toISOString() : null,
     createdAt: msg.createdAt.toISOString(),
+    fromAdmin: false,
   });
 });
 
@@ -64,6 +73,7 @@ router.get("/admin/messages", requireAdmin, async (_req, res): Promise<void> => 
     })
     .from(messagesTable)
     .innerJoin(usersTable, eq(messagesTable.senderId, usersTable.id))
+    .where(eq(messagesTable.recipientId, null as any))
     .orderBy(desc(messagesTable.createdAt));
 
   res.json(
@@ -80,6 +90,51 @@ router.get("/admin/messages", requireAdmin, async (_req, res): Promise<void> => 
       createdAt: m.msg.createdAt.toISOString(),
     }))
   );
+});
+
+router.post("/admin/messages/send", requireAdmin, async (req: AuthRequest, res): Promise<void> => {
+  const parsed = AdminSendMessageBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Validation error", message: parsed.error.message });
+    return;
+  }
+
+  const recipientId = parseInt(parsed.data.userId, 10);
+  if (isNaN(recipientId)) {
+    res.status(400).json({ error: "Bad request", message: "Geçersiz kullanıcı ID" });
+    return;
+  }
+
+  const [recipient] = await db.select().from(usersTable).where(eq(usersTable.id, recipientId));
+  if (!recipient) {
+    res.status(404).json({ error: "Not found", message: "Kullanıcı bulunamadı" });
+    return;
+  }
+
+  const [msg] = await db
+    .insert(messagesTable)
+    .values({ senderId: req.userId!, recipientId, content: parsed.data.content })
+    .returning();
+
+  if (!msg) {
+    res.status(500).json({ error: "Internal error", message: "Mesaj gönderilemedi" });
+    return;
+  }
+
+  const [adminUser] = await db.select().from(usersTable).where(eq(usersTable.id, req.userId!));
+
+  res.status(201).json({
+    id: String(msg.id),
+    senderId: String(msg.senderId),
+    senderName: adminUser?.fullName ?? "Admin",
+    senderPhone: adminUser?.phone ?? "",
+    senderPlate: adminUser?.plate ?? "",
+    content: msg.content,
+    isRead: msg.isRead,
+    adminReply: msg.adminReply ?? null,
+    repliedAt: msg.repliedAt ? msg.repliedAt.toISOString() : null,
+    createdAt: msg.createdAt.toISOString(),
+  });
 });
 
 router.post("/admin/messages/:id/reply", requireAdmin, async (req: AuthRequest, res): Promise<void> => {

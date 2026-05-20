@@ -9,6 +9,7 @@
 export * from './addCreditsRequest';
 export * from './adminMessage';
 export * from './adminReplyRequest';
+export * from './adminSendMessageRequest';
 export * from './adminUser';
 export * from './authResponse';
 export * from './commissionRecord';

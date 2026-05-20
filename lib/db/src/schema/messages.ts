@@ -6,6 +6,7 @@ import { usersTable } from "./users";
 export const messagesTable = pgTable("messages", {
   id: serial("id").primaryKey(),
   senderId: integer("sender_id").notNull().references(() => usersTable.id),
+  recipientId: integer("recipient_id").references(() => usersTable.id),
   content: text("content").notNull(),
   isRead: boolean("is_read").notNull().default(false),
   adminReply: text("admin_reply"),

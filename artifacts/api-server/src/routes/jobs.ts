@@ -173,7 +173,7 @@ router.post("/jobs/:id/grab", requireAuth, async (req: AuthRequest, res): Promis
     return;
   }
 
-  if (currentUser.credits < 10) {
+  if (currentUser.credits < 5) {
     res.status(400).json({ error: "Insufficient credits", message: "Bakiyeniz yetersiz. Lütfen kredi yükleyin." });
     return;
   }
@@ -204,7 +204,7 @@ router.post("/jobs/:id/grab", requireAuth, async (req: AuthRequest, res): Promis
 
   await db
     .update(usersTable)
-    .set({ credits: currentUser.credits - 10 })
+    .set({ credits: currentUser.credits - 5 })
     .where(eq(usersTable.id, req.userId!));
 
   const commission = parseFloat(row.job.commission);
@@ -243,7 +243,7 @@ router.post("/jobs/:id/grab", requireAuth, async (req: AuthRequest, res): Promis
       createdAt: updatedJob.createdAt.toISOString(),
     },
     passengerPhone: row.job.passengerPhone,
-    newCreditBalance: updatedUser?.credits ?? currentUser.credits - 10,
+    newCreditBalance: updatedUser?.credits ?? currentUser.credits - 5,
   });
 });
 

@@ -20,6 +20,8 @@ import {
   useAdminSendMessage,
   useAdminDeleteMessage,
   useAdminKeepMessage,
+  useAdminDeleteUser,
+  useAdminEditUser,
   getAdminListUsersQueryKey,
   getAdminGetMessagesQueryKey,
 } from "@workspace/api-client-react";
@@ -28,7 +30,7 @@ import { Feather } from "@expo/vector-icons";
 import { useQueryClient } from "@tanstack/react-query";
 
 type AdminTab = "users" | "messages";
-type UserModal = "credits" | "send-message" | null;
+type UserModal = "credits" | "send-message" | "edit" | null;
 
 interface ConversationUser {
   senderId: string;
@@ -58,6 +60,8 @@ export default function AdminScreen() {
   const sendMessageMutation = useAdminSendMessage();
   const deleteMutation = useAdminDeleteMessage();
   const keepMutation = useAdminKeepMessage();
+  const deleteUserMutation = useAdminDeleteUser();
+  const editUserMutation = useAdminEditUser();
 
   const [search, setSearch] = useState("");
   const [selectedUser, setSelectedUser] = useState<any>(null);
@@ -65,6 +69,14 @@ export default function AdminScreen() {
   const [creditAmount, setCreditAmount] = useState("");
   const [creditNote, setCreditNote] = useState("");
   const [sendMessageText, setSendMessageText] = useState("");
+
+  // Edit user fields
+  const [editFullName, setEditFullName] = useState("");
+  const [editPhone, setEditPhone] = useState("");
+  const [editPlate, setEditPlate] = useState("");
+  const [editCredits, setEditCredits] = useState("");
+  const [editIsVip, setEditIsVip] = useState(false);
+  const [editIsAdmin, setEditIsAdmin] = useState(false);
 
   const [selectedMessage, setSelectedMessage] = useState<any>(null);
   const [replyText, setReplyText] = useState("");
@@ -119,9 +131,71 @@ export default function AdminScreen() {
     setUserModal("send-message");
   };
 
+  const openEditModal = (user: any) => {
+    setSelectedUser(user);
+    setEditFullName(user.fullName);
+    setEditPhone(user.phone);
+    setEditPlate(user.plate);
+    setEditCredits(String(user.credits));
+    setEditIsVip(user.isVip);
+    setEditIsAdmin(user.isAdmin);
+    setUserModal("edit");
+  };
+
   const closeModal = () => {
     setSelectedUser(null);
     setUserModal(null);
+  };
+
+  const handleDeleteUser = (user: any) => {
+    Alert.alert(
+      "Kullaniciyi Sil",
+      `${user.fullName} adli kullaniciyi silmek istiyor musunuz? Bu islem geri alinamaz.`,
+      [
+        { text: "Iptal", style: "cancel" },
+        {
+          text: "Sil",
+          style: "destructive",
+          onPress: () => {
+            deleteUserMutation.mutate(
+              { id: user.id },
+              {
+                onSuccess: () => {
+                  queryClient.invalidateQueries({ queryKey: getAdminListUsersQueryKey() });
+                  Alert.alert("Silindi", "Kullanici basariyla silindi.");
+                },
+                onError: (err: any) => Alert.alert("Hata", err?.message || "Silinemedi."),
+              }
+            );
+          },
+        },
+      ]
+    );
+  };
+
+  const handleEditUser = () => {
+    if (!selectedUser) return;
+    const body: Record<string, any> = {};
+    if (editFullName.trim() !== selectedUser.fullName) body.fullName = editFullName.trim();
+    if (editPhone.trim() !== selectedUser.phone) body.phone = editPhone.trim();
+    if (editPlate.trim() !== selectedUser.plate) body.plate = editPlate.trim();
+    if (Number(editCredits) !== selectedUser.credits) body.credits = Number(editCredits);
+    if (editIsVip !== selectedUser.isVip) body.isVip = editIsVip;
+    if (editIsAdmin !== selectedUser.isAdmin) body.isAdmin = editIsAdmin;
+
+    if (Object.keys(body).length === 0) { closeModal(); return; }
+
+    editUserMutation.mutate(
+      { id: selectedUser.id, data: body },
+      {
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: getAdminListUsersQueryKey() });
+          closeModal();
+          Alert.alert("Kaydedildi", "Kullanici bilgileri guncellendi.");
+        },
+        onError: (err: any) => Alert.alert("Hata", err?.message || "Guncellenemedi."),
+      }
+    );
   };
 
   const handleAddCredits = () => {
@@ -329,12 +403,18 @@ export default function AdminScreen() {
                     <Text style={[styles.btnText, { color: colors.primary }]}>Mesaj</Text>
                   </Pressable>
                   <Pressable
-                    style={[styles.btn, { backgroundColor: item.isVip ? colors.destructive : colors.primary, borderRadius: colors.radius }]}
-                    onPress={() => handleToggleVip(item.id, item.isVip)}
+                    style={[styles.btn, { backgroundColor: colors.card, borderRadius: colors.radius, borderWidth: 1, borderColor: colors.border }]}
+                    onPress={() => openEditModal(item)}
                   >
-                    <Text style={[styles.btnText, { color: item.isVip ? colors.destructiveForeground : colors.primaryForeground }]}>
-                      {item.isVip ? "VIP Kaldir" : "VIP Yap"}
-                    </Text>
+                    <Feather name="edit-2" size={14} color={colors.foreground} />
+                    <Text style={[styles.btnText, { color: colors.foreground }]}>Duzenle</Text>
+                  </Pressable>
+                  <Pressable
+                    style={[styles.btn, { backgroundColor: colors.destructive, borderRadius: colors.radius }]}
+                    onPress={() => handleDeleteUser(item)}
+                  >
+                    <Feather name="trash-2" size={14} color={colors.destructiveForeground} />
+                    <Text style={[styles.btnText, { color: colors.destructiveForeground }]}>Sil</Text>
                   </Pressable>
                 </View>
               </View>
@@ -477,6 +557,72 @@ export default function AdminScreen() {
               </View>
             )}
           </ScrollView>
+        </View>
+      </Modal>
+
+      {/* Edit User Modal */}
+      <Modal visible={userModal === "edit"} animationType="slide" transparent>
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { backgroundColor: colors.background, borderRadius: colors.radius, borderColor: colors.border }]}>
+            <Text style={[styles.modalTitle, { color: colors.foreground }]}>Kullaniciyi Duzenle</Text>
+            <TextInput
+              style={[styles.input, { backgroundColor: colors.input, color: colors.foreground, borderColor: colors.border, borderRadius: colors.radius }]}
+              placeholder="Ad Soyad"
+              placeholderTextColor={colors.mutedForeground}
+              value={editFullName}
+              onChangeText={setEditFullName}
+            />
+            <TextInput
+              style={[styles.input, { backgroundColor: colors.input, color: colors.foreground, borderColor: colors.border, borderRadius: colors.radius, marginTop: 10 }]}
+              placeholder="Telefon"
+              placeholderTextColor={colors.mutedForeground}
+              keyboardType="phone-pad"
+              value={editPhone}
+              onChangeText={setEditPhone}
+            />
+            <TextInput
+              style={[styles.input, { backgroundColor: colors.input, color: colors.foreground, borderColor: colors.border, borderRadius: colors.radius, marginTop: 10 }]}
+              placeholder="Plaka"
+              placeholderTextColor={colors.mutedForeground}
+              autoCapitalize="characters"
+              value={editPlate}
+              onChangeText={setEditPlate}
+            />
+            <TextInput
+              style={[styles.input, { backgroundColor: colors.input, color: colors.foreground, borderColor: colors.border, borderRadius: colors.radius, marginTop: 10 }]}
+              placeholder="Kredi"
+              placeholderTextColor={colors.mutedForeground}
+              keyboardType="numeric"
+              value={editCredits}
+              onChangeText={setEditCredits}
+            />
+            <View style={{ flexDirection: "row", gap: 10, marginTop: 14 }}>
+              <Pressable
+                style={[styles.toggleBtn, { backgroundColor: editIsVip ? colors.primary : colors.secondary, borderRadius: colors.radius }]}
+                onPress={() => setEditIsVip(!editIsVip)}
+              >
+                <Text style={{ color: editIsVip ? colors.primaryForeground : colors.secondaryForeground, fontWeight: "700" }}>
+                  {editIsVip ? "VIP" : "VIP Degil"}
+                </Text>
+              </Pressable>
+              <Pressable
+                style={[styles.toggleBtn, { backgroundColor: editIsAdmin ? colors.primary : colors.secondary, borderRadius: colors.radius }]}
+                onPress={() => setEditIsAdmin(!editIsAdmin)}
+              >
+                <Text style={{ color: editIsAdmin ? colors.primaryForeground : colors.secondaryForeground, fontWeight: "700" }}>
+                  {editIsAdmin ? "Admin" : "Admin Degil"}
+                </Text>
+              </Pressable>
+            </View>
+            <View style={styles.modalActions}>
+              <Pressable style={[styles.modalBtn, { backgroundColor: colors.secondary }]} onPress={closeModal}>
+                <Text style={{ color: colors.secondaryForeground, fontWeight: "600" }}>Iptal</Text>
+              </Pressable>
+              <Pressable style={[styles.modalBtn, { backgroundColor: colors.primary }]} onPress={handleEditUser} disabled={editUserMutation.isPending}>
+                {editUserMutation.isPending ? <ActivityIndicator color={colors.primaryForeground} /> : <Text style={{ color: colors.primaryForeground, fontWeight: "600" }}>Kaydet</Text>}
+              </Pressable>
+            </View>
+          </View>
         </View>
       </Modal>
 
@@ -628,6 +774,7 @@ const styles = StyleSheet.create({
   msgActions: { flexDirection: "row", gap: 8, flexWrap: "wrap", marginTop: 4 },
   smallBtn: { flexDirection: "row", alignItems: "center", gap: 5, paddingHorizontal: 10, paddingVertical: 7 },
   smallBtnText: { fontSize: 12, fontWeight: "700" },
+  toggleBtn: { flex: 1, paddingVertical: 12, alignItems: "center", borderRadius: 8 },
   // Modals
   modalOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.6)", justifyContent: "center", padding: 24 },
   modalContent: { padding: 24, borderWidth: 1 },

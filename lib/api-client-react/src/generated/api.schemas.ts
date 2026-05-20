@@ -157,6 +157,22 @@ export interface AdminUser {
   createdAt: string;
 }
 
+export interface AdminEditUserRequest {
+  fullName?: string;
+  phone?: string;
+  plate?: string;
+  credits?: number;
+  isVip?: boolean;
+  isAdmin?: boolean;
+}
+
+export interface UpdateProfileRequest {
+  fullName?: string;
+  plate?: string;
+  currentPassword?: string;
+  newPassword?: string;
+}
+
 export interface AddCreditsRequest {
   amount: number;
   note?: string;

@@ -7,6 +7,7 @@
  */
 
 export * from './addCreditsRequest';
+export * from './adminEditUserRequest';
 export * from './adminMessage';
 export * from './adminReplyRequest';
 export * from './adminSendMessageRequest';
@@ -31,6 +32,7 @@ export * from './sendOtpRequest';
 export * from './sendOtpResponse';
 export * from './setVipRequest';
 export * from './successResponse';
+export * from './updateProfileRequest';
 export * from './user';
 export * from './userMessage';
 export * from './verifyOtpRequest';

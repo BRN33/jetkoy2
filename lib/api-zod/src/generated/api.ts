@@ -91,6 +91,28 @@ export const GetMeResponse = zod.object({
 
 
 /**
+ * @summary Update own profile (name, plate, password)
+ */
+export const UpdateProfileBody = zod.object({
+  "fullName": zod.string().optional(),
+  "plate": zod.string().optional(),
+  "currentPassword": zod.string().optional(),
+  "newPassword": zod.string().optional()
+})
+
+export const UpdateProfileResponse = zod.object({
+  "id": zod.string(),
+  "fullName": zod.string(),
+  "phone": zod.string(),
+  "plate": zod.string(),
+  "credits": zod.number(),
+  "isVip": zod.boolean(),
+  "isAdmin": zod.boolean(),
+  "createdAt": zod.string()
+})
+
+
+/**
  * @summary List available jobs in the pool
  */
 export const ListJobsResponseItem = zod.object({
@@ -399,6 +421,48 @@ export const AdminReplyMessageResponse = zod.object({
   "adminKeep": zod.boolean(),
   "adminReply": zod.string().nullish(),
   "repliedAt": zod.string().nullish(),
+  "createdAt": zod.string()
+})
+
+
+/**
+ * @summary Delete a user (admin only)
+ */
+export const AdminDeleteUserParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+export const AdminDeleteUserResponse = zod.object({
+  "success": zod.boolean()
+})
+
+
+/**
+ * @summary Edit user details (admin only)
+ */
+export const AdminEditUserParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+export const AdminEditUserBody = zod.object({
+  "fullName": zod.string().optional(),
+  "phone": zod.string().optional(),
+  "plate": zod.string().optional(),
+  "credits": zod.number().optional(),
+  "isVip": zod.boolean().optional(),
+  "isAdmin": zod.boolean().optional()
+})
+
+export const AdminEditUserResponse = zod.object({
+  "id": zod.string(),
+  "fullName": zod.string(),
+  "phone": zod.string(),
+  "plate": zod.string(),
+  "credits": zod.number(),
+  "isVip": zod.boolean(),
+  "isAdmin": zod.boolean(),
+  "jobsCreated": zod.number(),
+  "jobsGrabbed": zod.number(),
   "createdAt": zod.string()
 })
 

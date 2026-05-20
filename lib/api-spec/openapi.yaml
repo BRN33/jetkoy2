@@ -172,6 +172,39 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
+  /profile:
+    patch:
+      operationId: updateProfile
+      tags: [auth]
+      summary: Update own profile (name, plate, password)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateProfileRequest"
+      responses:
+        "200":
+          description: Profile updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
   /jobs:
     get:
       operationId: listJobs
@@ -592,6 +625,76 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
+  /admin/users/{id}:
+    delete:
+      operationId: adminDeleteUser
+      tags: [admin]
+      summary: Delete a user (admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: User deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    patch:
+      operationId: adminEditUser
+      tags: [admin]
+      summary: Edit user details (admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminEditUserRequest"
+      responses:
+        "200":
+          description: User updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminUser"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
   /admin/users/{id}/vip:
     post:
       operationId: adminSetVip
@@ -962,6 +1065,34 @@ components:
         - jobsCreated
         - jobsGrabbed
         - createdAt
+
+    AdminEditUserRequest:
+      type: object
+      properties:
+        fullName:
+          type: string
+        phone:
+          type: string
+        plate:
+          type: string
+        credits:
+          type: number
+        isVip:
+          type: boolean
+        isAdmin:
+          type: boolean
+
+    UpdateProfileRequest:
+      type: object
+      properties:
+        fullName:
+          type: string
+        plate:
+          type: string
+        currentPassword:
+          type: string
+        newPassword:
+          type: string
 
     AddCreditsRequest:
       type: object

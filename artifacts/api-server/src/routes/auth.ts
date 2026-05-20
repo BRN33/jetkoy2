@@ -2,7 +2,7 @@ import { Router, type IRouter } from "express";
 import bcrypt from "bcrypt";
 import { db, usersTable, phoneVerificationsTable } from "@workspace/db";
 import { eq, and, gt } from "drizzle-orm";
-import { RegisterUserBody, LoginUserBody, SendOtpBody, VerifyOtpBody } from "@workspace/api-zod";
+import { RegisterUserBody, LoginUserBody, SendOtpBody, VerifyOtpBody, UpdateProfileBody } from "@workspace/api-zod";
 import { requireAuth, signToken, type AuthRequest } from "../middlewares/auth";
 
 const router: IRouter = Router();
@@ -201,6 +201,60 @@ router.get("/auth/me", requireAuth, async (req: AuthRequest, res): Promise<void>
     isVip: user.isVip,
     isAdmin: user.isAdmin,
     createdAt: user.createdAt.toISOString(),
+  });
+});
+
+router.patch("/profile", requireAuth, async (req: AuthRequest, res): Promise<void> => {
+  const parsed = UpdateProfileBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Validation error", message: parsed.error.message });
+    return;
+  }
+
+  const [user] = await db.select().from(usersTable).where(eq(usersTable.id, req.userId!));
+  if (!user) {
+    res.status(401).json({ error: "Unauthorized", message: "Kullanıcı bulunamadı" });
+    return;
+  }
+
+  const updates: Partial<typeof usersTable.$inferInsert> = {};
+
+  if (parsed.data.fullName?.trim()) updates.fullName = parsed.data.fullName.trim();
+  if (parsed.data.plate?.trim()) updates.plate = parsed.data.plate.trim().toUpperCase();
+
+  if (parsed.data.newPassword?.trim()) {
+    if (!parsed.data.currentPassword?.trim()) {
+      res.status(400).json({ error: "Bad request", message: "Mevcut şifre gerekli" });
+      return;
+    }
+    const valid = await bcrypt.compare(parsed.data.currentPassword, user.passwordHash);
+    if (!valid) {
+      res.status(400).json({ error: "Bad request", message: "Mevcut şifre hatalı" });
+      return;
+    }
+    updates.passwordHash = await bcrypt.hash(parsed.data.newPassword, 10);
+  }
+
+  const [updated] = await db
+    .update(usersTable)
+    .set(updates)
+    .where(eq(usersTable.id, req.userId!))
+    .returning();
+
+  if (!updated) {
+    res.status(500).json({ error: "Internal error", message: "Güncelleme başarısız" });
+    return;
+  }
+
+  res.json({
+    id: String(updated.id),
+    fullName: updated.fullName,
+    phone: updated.phone,
+    plate: updated.plate,
+    credits: updated.credits,
+    isVip: updated.isVip,
+    isAdmin: updated.isAdmin,
+    createdAt: updated.createdAt.toISOString(),
   });
 });
 

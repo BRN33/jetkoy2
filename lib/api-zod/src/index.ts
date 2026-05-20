@@ -1,6 +1,7 @@
 export * from "./generated/api";
 export type {
   AddCreditsRequest,
+  AdminEditUserRequest,
   AdminMessage,
   AdminReplyRequest,
   AdminSendMessageRequest,
@@ -23,6 +24,8 @@ export type {
   SendOtpRequest,
   SendOtpResponse,
   SetVipRequest,
+  SuccessResponse,
+  UpdateProfileRequest,
   User,
   UserMessage,
   VerifyOtpRequest,

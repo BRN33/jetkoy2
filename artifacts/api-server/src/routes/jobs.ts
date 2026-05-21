@@ -203,7 +203,7 @@ router.post("/jobs/:id/grab", requireAuth, async (req: AuthRequest, res): Promis
   }
 
   if (row.job.creatorId === req.userId) {
-    res.status(400).json({ error: "Cannot grab own job", message: "Kendi işinizi kaptamazsınız" });
+    res.status(400).json({ error: "Cannot grab own job", message: "Kendi oluşturduğunuz işi alamazsınız" });
     return;
   }
 

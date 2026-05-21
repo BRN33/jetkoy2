@@ -107,9 +107,9 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen name="create-job" options={{ href: null }} />
-      <Tabs.Screen name="privacy" options={{ href: null, title: "Gizlilik Politikasi" }} />
-      <Tabs.Screen name="terms" options={{ href: null, title: "Kullanim Kosullari" }} />
-      <Tabs.Screen name="about" options={{ href: null, title: "Hakkinda" }} />
+      <Tabs.Screen name="privacy" options={{ href: null, title: "Gizlilik Politikası" }} />
+      <Tabs.Screen name="terms" options={{ href: null, title: "Kullanım Koşulları" }} />
+      <Tabs.Screen name="about" options={{ href: null, title: "Hakkında" }} />
     </Tabs>
   );
 }

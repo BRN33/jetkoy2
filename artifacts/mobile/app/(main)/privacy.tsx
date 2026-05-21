@@ -6,31 +6,31 @@ export default function PrivacyScreen() {
   const colors = useColors();
   return (
     <ScrollView style={{ flex: 1, backgroundColor: colors.background }} contentContainerStyle={styles.container}>
-      <Text style={[styles.title, { color: colors.foreground }]}>Gizlilik Politikasi</Text>
-      <Text style={[styles.updated, { color: colors.mutedForeground }]}>Son guncelleme: Mayis 2025</Text>
+      <Text style={[styles.title, { color: colors.foreground }]}>Gizlilik Politikası</Text>
+      <Text style={[styles.updated, { color: colors.mutedForeground }]}>Son güncelleme: Mayıs 2025</Text>
 
       <Section title="1. Toplanan Veriler" colors={colors}>
-        JetKoy uygulamasi asagidaki bilgileri toplar:{"\n\n"}
-        - Ad soyad, telefon numarasi ve arac plakasi (kayit sirasinda){"\n"}
-        - Paylasilan ve kaptaniniz is bilgileri{"\n"}
-        - Uygulama kullanim istatistikleri{"\n"}
+        JetKöy uygulaması aşağıdaki bilgileri toplar:{"\n\n"}
+        - Ad soyad, telefon numarası ve araç plakası (kayıt sırasında){"\n"}
+        - Paylaştığınız ve Kaptığınız iş bilgileri{"\n"}
+        - Uygulama kullanım istatistikleri{"\n"}
         - Push bildirim tokeni (bildirim izni verildiyse)
       </Section>
 
-      <Section title="2. Verilerin Kullanimi" colors={colors}>
-        Toplanan veriler yalnizca uygulamanin calistirilmasi, kullanicilarin birbirini tanimasi ve is paylasiminin saglanmasi amacli kullanilir. Verileriniz ucuncu taraflarla paylasilmaz veya satilmaz.
+      <Section title="2. Verilerin Kullanımı" colors={colors}>
+        Toplanan veriler yalnızca uygulamanın çalıştırılması, kullanıcıların birbirini tanıması ve iş paylaşımının sağlanması amacıyla kullanılır. Verileriniz üçüncü taraflarla paylaşılmaz veya satılmaz.
       </Section>
 
-      <Section title="3. Veri Guvenligi" colors={colors}>
-        Sifreler bcrypt ile sifrelenerek saklanir. Tum API baglantilari HTTPS uzerinden gerceklesir. Yolcu telefon numaralari is kapatilana kadar diger kullanicilara gizlenir.
+      <Section title="3. Veri Güvenliği" colors={colors}>
+        Şifreler bcrypt ile şifrelenerek saklanır. Tüm API bağlantıları HTTPS üzerinden gerçekleşir. Yolcu telefon numaraları iş kapatılana kadar diğer kullanıcılara gizlenir.
       </Section>
 
       <Section title="4. Veri Saklama" colors={colors}>
-        Hesabinizi sildiginizde, kisisel verileriniz kalici olarak silinir. Admin mesajlari 12 saat sonra otomatik silinir.
+        Hesabınızı sildiğinizde, kişisel verileriniz kalıcı olarak silinir. Admin mesajları 12 saat sonra otomatik silinir.
       </Section>
 
-      <Section title="5. Iletisim" colors={colors}>
-        Gizlilik ile ilgili sorulariniz icin uygulama icindeki mesajlasma ozelligi veya yetkili yoneticiniz araciligiyla bize ulasabilirsiniz.
+      <Section title="5. İletişim" colors={colors}>
+        Gizlilik ile ilgili sorularınız için uygulama içindeki mesajlaşma özelliği veya yetkili yöneticiniz aracılığıyla bize ulaşabilirsiniz.
       </Section>
     </ScrollView>
   );

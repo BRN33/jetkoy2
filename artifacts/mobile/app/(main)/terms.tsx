@@ -6,34 +6,34 @@ export default function TermsScreen() {
   const colors = useColors();
   return (
     <ScrollView style={{ flex: 1, backgroundColor: colors.background }} contentContainerStyle={styles.container}>
-      <Text style={[styles.title, { color: colors.foreground }]}>Kullanim Kosullari</Text>
-      <Text style={[styles.updated, { color: colors.mutedForeground }]}>Son guncelleme: Mayis 2025</Text>
+      <Text style={[styles.title, { color: colors.foreground }]}>Kullanım Koşulları</Text>
+      <Text style={[styles.updated, { color: colors.mutedForeground }]}>Son güncelleme: Mayıs 2025</Text>
 
-      <Section title="1. Hizmet Tanimi" colors={colors}>
-        JetKoy, suruculerin birbirleriyle is paylasmasini ve koordineli sekilde calismasini saglayan bir mobil platformdur. Uygulama, suruculer arasinda is organizasyonu amaciyla sunulmaktadir.
+      <Section title="1. Hizmet Tanımı" colors={colors}>
+        JetKöy, sürücülerin birbirleriyle iş paylaşmasını ve koordineli şekilde çalışmasını sağlayan bir mobil platformdur. Uygulama, sürücüler arasında iş organizasyonu amacıyla sunulmaktadır.
       </Section>
 
-      <Section title="2. Kullanici Sorumlulugu" colors={colors}>
-        - Kayit sirasinda dogru ve eksiksiz bilgi vermek zorundasiniz.{"\n"}
-        - Hesabinizin guvenligi sizin sorumlulugundadir.{"\n"}
-        - Platformu yasadisi veya sahte islemler icin kullanamazsiniz.{"\n"}
-        - Diger kullanicilara karsi saygi cercevesinde davranmak zorundasiniz.
+      <Section title="2. Kullanıcı Sorumluluğu" colors={colors}>
+        - Kayıt sırasında doğru ve eksiksiz bilgi vermek zorundasınız.{"\n"}
+        - Hesabınızın güvenliği sizin sorumluluğunuzdadır.{"\n"}
+        - Platformu yasadışı veya sahte işlemler için kullanamazsınız.{"\n"}
+        - Diğer kullanıcılara karşı saygı çerçevesinde davranmak zorundasınız.
       </Section>
 
       <Section title="3. Kredi Sistemi" colors={colors}>
-        Her is kapma islemi 10 kredi (TL) duser. Yetersiz bakiyede is kaptirilamaz. Krediler iade edilmez; ancak yonetici takdirine gore ayarlama yapilabilir.
+        Her iş kapma işlemi 10 kredi (TL) düşer. Yetersiz bakiyede iş kaptırılamaz. Krediler iade edilmez; ancak yönetici takdirine göre ayarlama yapılabilir.
       </Section>
 
-      <Section title="4. VIP Uyelik" colors={colors}>
-        VIP uyeler yeni isleri 10 saniye onceden gorerek avantaj elde eder. VIP statüsü yonetici tarafindan verilir ve geri alinabilir.
+      <Section title="4. VIP Üyelik" colors={colors}>
+        VIP üyeler yeni işleri 10 saniye önceden görerek avantaj elde eder. VIP statüsü yönetici tarafından verilir ve geri alınabilir.
       </Section>
 
-      <Section title="5. Hesap Askiya Alma ve Silme" colors={colors}>
-        Kurallara aykiri davranisin tespit edilmesi halinde hesabiniz uyari verilmeksizin askiya alinabilir ya da silinebilir. Hesabinizi kendiniz de silebilirsiniz; bu durumda tum verileriniz kalici olarak kaldirilir.
+      <Section title="5. Hesap Askıya Alma ve Silme" colors={colors}>
+        Kurallara aykırı davranışın tespit edilmesi halinde hesabınız uyarı verilmeksizin askıya alınabilir ya da silinebilir. Hesabınızı kendiniz de silebilirsiniz; bu durumda tüm verileriniz kalıcı olarak kaldırılır.
       </Section>
 
-      <Section title="6. Kosullarda Degisiklik" colors={colors}>
-        Bu kosullar zaman zaman guncellenebilir. Onemli degisiklikler uygulama icinde bildirilecektir. Uygulamayi kullanmaya devam etmeniz guncel kosullari kabul ettiginiz anlamina gelir.
+      <Section title="6. Koşullarda Değişiklik" colors={colors}>
+        Bu koşullar zaman zaman güncellenebilir. Önemli değişiklikler uygulama içinde bildirilecektir. Uygulamayı kullanmaya devam etmeniz güncel koşulları kabul ettiğiniz anlamına gelir.
       </Section>
     </ScrollView>
   );

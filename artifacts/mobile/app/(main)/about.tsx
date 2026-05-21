@@ -12,23 +12,23 @@ export default function AboutScreen() {
       <View style={[styles.logoBox, { backgroundColor: colors.primary }]}>
         <Feather name="truck" size={48} color={colors.primaryForeground} />
       </View>
-      <Text style={[styles.appName, { color: colors.foreground }]}>JetKoy</Text>
-      <Text style={[styles.version, { color: colors.mutedForeground }]}>Surum {APP_VERSION}</Text>
+      <Text style={[styles.appName, { color: colors.foreground }]}>JetKöy</Text>
+      <Text style={[styles.version, { color: colors.mutedForeground }]}>Sürüm {APP_VERSION}</Text>
 
       <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
-        <Row icon="info" label="Amac" value="Suruculer icin is paylasim ve koordinasyon platformu" colors={colors} />
-        <Row icon="users" label="Hedef Kitle" value="Aktif calismasini surucu ve operatorler" colors={colors} />
+        <Row icon="info" label="Amaç" value="Sürücüler için iş paylaşım ve koordinasyon platformu" colors={colors} />
+        <Row icon="users" label="Hedef Kitle" value="Aktif çalışan sürücü ve operatörler" colors={colors} />
         <Row icon="globe" label="Platform" value="Mobil (iOS & Android)" colors={colors} />
       </View>
 
       <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
         <Row icon="cpu" label="Teknoloji" value="React Native (Expo) + Node.js" colors={colors} />
-        <Row icon="database" label="Veritabani" value="PostgreSQL" colors={colors} />
-        <Row icon="shield" label="Guvenlik" value="JWT + bcrypt sifreleme" colors={colors} />
+        <Row icon="database" label="Veritabanı" value="PostgreSQL" colors={colors} />
+        <Row icon="shield" label="Güvenlik" value="JWT + bcrypt şifreleme" colors={colors} />
       </View>
 
       <Text style={[styles.footer, { color: colors.mutedForeground }]}>
-        Tum haklar saklidir.{"\n"}JetKoy {new Date().getFullYear()}
+        Tüm haklar saklıdır.{"\n"}JetKöy {new Date().getFullYear()}
       </Text>
     </ScrollView>
   );

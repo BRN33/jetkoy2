@@ -19,6 +19,16 @@ function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): nu
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
+function timeAgo(dateStr: string): string {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return "az önce";
+  if (mins < 60) return `${mins} dk önce`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs} sa önce`;
+  return `${Math.floor(hrs / 24)} gün önce`;
+}
+
 export default function JobPoolScreen() {
   const colors = useColors();
   const { user } = useAuth();
@@ -72,7 +82,6 @@ export default function JobPoolScreen() {
 
   const pendingCount = user?.isVip ? 0 : allJobs.length - visibleJobs.length;
 
-  // Sort by distance from user if location known
   const sortedJobs = location
     ? [...visibleJobs].sort((a, b) => {
         const aLat = a.departureLat;
@@ -94,134 +103,160 @@ export default function JobPoolScreen() {
           <ActivityIndicator size="large" color={colors.primary} />
         </View>
       ) : (
-        <>
-          {pendingCount > 0 && (
-            <View style={[styles.pendingBanner, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
-              <ActivityIndicator size="small" color={colors.primary} />
-              <Text style={[styles.pendingText, { color: colors.mutedForeground }]}>
-                {pendingCount} iş bekleniyor...
-              </Text>
-            </View>
-          )}
+        <FlatList
+          data={sortedJobs}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.listContent}
+          refreshControl={
+            <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={colors.primary} />
+          }
+          ListHeaderComponent={
+            <>
+              {pendingCount > 0 && (
+                <View style={[styles.pendingBanner, { backgroundColor: "#1C1500", borderColor: colors.primary }]}>
+                  <ActivityIndicator size="small" color={colors.primary} />
+                  <Text style={[styles.pendingText, { color: colors.primary }]}>
+                    {pendingCount} iş bekleniyor...
+                  </Text>
+                  <Text style={[styles.pendingVip, { color: colors.mutedForeground }]}>VIP olun, anında görün</Text>
+                </View>
+              )}
 
-          <FlatList
-            data={sortedJobs}
-            keyExtractor={(item) => item.id}
-            contentContainerStyle={styles.listContent}
-            refreshControl={
-              <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={colors.primary} />
-            }
-            ListHeaderComponent={
-              <>
-                {location && (
-                  <View style={[styles.locationBanner, { backgroundColor: colors.card, borderColor: colors.border }]}>
-                    <Feather name="map-pin" size={14} color={colors.primary} />
-                    <Text style={[styles.locationText, { color: colors.mutedForeground }]}>
-                      Yakınınızdaki işler önce gösteriliyor
-                    </Text>
-                  </View>
-                )}
-                <Pressable
-                  style={({ pressed }) => [
-                    styles.shareButton,
-                    { backgroundColor: colors.primary, opacity: pressed ? 0.85 : 1 },
-                  ]}
-                  onPress={() => router.push("/(main)/create-job")}
-                >
-                  <Feather name="plus-circle" size={20} color={colors.primaryForeground} />
-                  <Text style={[styles.shareButtonText, { color: colors.primaryForeground }]}>
-                    İş Paylaş
-                  </Text>
-                </Pressable>
-              </>
-            }
-            ListEmptyComponent={
-              <View style={styles.center}>
-                <Feather name="inbox" size={48} color={colors.mutedForeground} />
-                <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>
-                  {pendingCount > 0 ? "Yeni işler geliyor..." : "Şu an iş yok"}
+              <Pressable
+                style={({ pressed }) => [
+                  styles.shareButton,
+                  { backgroundColor: colors.primary, opacity: pressed ? 0.85 : 1 },
+                ]}
+                onPress={() => router.push("/(main)/create-job")}
+              >
+                <Feather name="plus-circle" size={22} color={colors.primaryForeground} />
+                <Text style={[styles.shareButtonText, { color: colors.primaryForeground }]}>
+                  YENİ İŞ OLUŞTUR
                 </Text>
-                {pendingCount > 0 && (
-                  <Text style={[styles.emptySubText, { color: colors.mutedForeground }]}>
-                    VIP olarak anında görmek ister misiniz?
-                  </Text>
-                )}
-              </View>
-            }
-            renderItem={({ item }) => {
-              const dist = location && item.departureLat != null && item.departureLng != null
+              </Pressable>
+
+              {sortedJobs.length > 0 && (
+                <View style={styles.sectionHeader}>
+                  <Text style={[styles.sectionLabel, { color: colors.mutedForeground }]}>Açık İşler </Text>
+                  <Text style={[styles.sectionCount, { color: colors.primary }]}>({sortedJobs.length})</Text>
+                </View>
+              )}
+            </>
+          }
+          ListEmptyComponent={
+            <View style={styles.emptyContainer}>
+              <Feather name="inbox" size={52} color={colors.mutedForeground} />
+              <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>
+                {pendingCount > 0 ? "Yeni işler geliyor..." : "Şu an iş yok"}
+              </Text>
+              {pendingCount > 0 && (
+                <Text style={[styles.emptySubText, { color: colors.mutedForeground }]}>
+                  VIP olarak anında görmek ister misiniz?
+                </Text>
+              )}
+            </View>
+          }
+          renderItem={({ item }) => {
+            const dist =
+              location && item.departureLat != null && item.departureLng != null
                 ? haversineKm(location.lat, location.lng, item.departureLat, item.departureLng)
                 : null;
+            const netFare = item.totalFare - item.commission;
 
-              return (
-                <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
-                  <View style={styles.cardHeader}>
-                    <View style={styles.routeContainer}>
-                      <Text style={[styles.routeText, { color: colors.foreground }]} numberOfLines={1}>
-                        {item.departure}
-                      </Text>
-                      <Feather name="arrow-right" size={16} color={colors.mutedForeground} style={{ marginHorizontal: 8 }} />
-                      <Text style={[styles.routeText, { color: colors.foreground }]} numberOfLines={1}>
-                        {item.destination}
-                      </Text>
-                    </View>
+            return (
+              <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                {/* Top: status badge + distance + time */}
+                <View style={styles.topRow}>
+                  <View style={[styles.statusBadge, { backgroundColor: "#0A2010" }]}>
+                    <View style={styles.statusDot} />
+                    <Text style={styles.statusText}>AÇIK</Text>
+                  </View>
+                  <View style={styles.topRight}>
                     {dist != null && (
-                      <View style={[styles.distBadge, { backgroundColor: colors.primary + "22" }]}>
-                        <Feather name="map-pin" size={12} color={colors.primary} />
+                      <View style={[styles.distBadge, { backgroundColor: colors.primary + "18" }]}>
+                        <Feather name="map-pin" size={11} color={colors.primary} />
                         <Text style={[styles.distText, { color: colors.primary }]}>
                           {dist < 1 ? `${Math.round(dist * 1000)} m` : `${dist.toFixed(1)} km`}
                         </Text>
                       </View>
                     )}
-                  </View>
-
-                  <View style={styles.detailsRow}>
-                    <View>
-                      <Text style={[styles.label, { color: colors.mutedForeground }]}>Yolcu</Text>
-                      <Text style={[styles.value, { color: colors.foreground }]}>{item.passengerName}</Text>
-                    </View>
-                    <View>
-                      <Text style={[styles.label, { color: colors.mutedForeground }]}>Telefon</Text>
-                      <Text style={[styles.value, { color: colors.foreground }]}>{item.passengerPhoneMasked}</Text>
-                    </View>
-                  </View>
-
-                  <View style={styles.detailsRow}>
-                    <View>
-                      <Text style={[styles.label, { color: colors.mutedForeground }]}>Oluşturan</Text>
-                      <Text style={[styles.value, { color: colors.foreground }]}>
-                        {item.creatorName} ({item.creatorPlate})
-                      </Text>
-                    </View>
-                  </View>
-
-                  <View style={styles.footerRow}>
-                    <View>
-                      <Text style={[styles.priceText, { color: colors.foreground }]}>{item.totalFare} TL</Text>
-                      <Text style={[styles.commissionText, { color: colors.mutedForeground }]}>
-                        Komisyon: {item.commission} TL
-                      </Text>
-                    </View>
-                    <Pressable
-                      style={({ pressed }) => [
-                        styles.grabButton,
-                        { backgroundColor: colors.primary, opacity: pressed ? 0.8 : 1 },
-                      ]}
-                      onPress={() => handleGrab(item.id)}
-                      disabled={grabMutation.isPending}
-                    >
-                      {grabMutation.isPending && grabMutation.variables?.id === item.id ? (
-                        <ActivityIndicator color={colors.primaryForeground} />
-                      ) : (
-                        <Text style={[styles.grabButtonText, { color: colors.primaryForeground }]}>İŞİ KAP</Text>
-                      )}
-                    </Pressable>
+                    <Text style={[styles.timeAgo, { color: colors.mutedForeground }]}>{timeAgo(item.createdAt)}</Text>
                   </View>
                 </View>
-              );
-            }}
-          />
-        </>
+
+                {/* Route */}
+                <View style={styles.routeBlock}>
+                  <View style={styles.routeRow}>
+                    <View style={styles.routeDotGreen} />
+                    <Text style={[styles.routeText, { color: colors.foreground }]} numberOfLines={1}>
+                      {item.departure}
+                    </Text>
+                  </View>
+                  <View style={[styles.routeConnector, { borderColor: colors.border }]} />
+                  <View style={styles.routeRow}>
+                    <Feather name="map-pin" size={14} color="#EF4444" style={{ width: 14 }} />
+                    <Text style={[styles.routeText, { color: colors.foreground }]} numberOfLines={1}>
+                      {item.destination}
+                    </Text>
+                  </View>
+                </View>
+
+                {/* Price stats */}
+                <View style={[styles.statsBox, { backgroundColor: colors.background, borderColor: colors.border }]}>
+                  <View style={styles.statItem}>
+                    <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>TOPLAM ÜCRET</Text>
+                    <Text style={[styles.statValue, { color: colors.foreground }]}>₺{item.totalFare}</Text>
+                  </View>
+                  <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
+                  <View style={styles.statItem}>
+                    <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>KOMİSYON</Text>
+                    <Text style={[styles.statValue, { color: "#22C55E" }]}>₺{item.commission}</Text>
+                  </View>
+                  <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
+                  <View style={styles.statItem}>
+                    <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>NET KAZANÇ</Text>
+                    <Text style={[styles.statValue, { color: "#F97316" }]}>₺{netFare}</Text>
+                  </View>
+                </View>
+
+                {/* Driver info */}
+                <View style={styles.driverRow}>
+                  <Feather name="user" size={14} color={colors.mutedForeground} />
+                  <Text style={[styles.driverText, { color: colors.mutedForeground }]}>
+                    {item.creatorName} ({item.creatorPlate})
+                  </Text>
+                </View>
+
+                {/* Privacy hint */}
+                <View style={styles.privacyRow}>
+                  <Feather name="lock" size={12} color={colors.mutedForeground} />
+                  <Text style={[styles.privacyText, { color: colors.mutedForeground }]}>
+                    Yolcu bilgileri işi kapan şoföre gösterilir
+                  </Text>
+                </View>
+
+                {/* Grab button */}
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.grabButton,
+                    { opacity: pressed ? 0.85 : 1 },
+                  ]}
+                  onPress={() => handleGrab(item.id)}
+                  disabled={grabMutation.isPending}
+                >
+                  {grabMutation.isPending && grabMutation.variables?.id === item.id ? (
+                    <ActivityIndicator color="#FFFFFF" />
+                  ) : (
+                    <>
+                      <Feather name="zap" size={18} color="#FFFFFF" />
+                      <Text style={styles.grabButtonText}>İŞİ KAP</Text>
+                    </>
+                  )}
+                </Pressable>
+              </View>
+            );
+          }}
+        />
       )}
     </View>
   );
@@ -230,65 +265,92 @@ export default function JobPoolScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   listContent: { padding: 16, paddingBottom: 100, flexGrow: 1 },
-  center: { flex: 1, justifyContent: "center", alignItems: "center", paddingTop: 100, gap: 12 },
+  center: { flex: 1, justifyContent: "center", alignItems: "center", paddingTop: 60, gap: 12 },
+  emptyContainer: { alignItems: "center", paddingTop: 80, gap: 12 },
   emptyText: { fontSize: 16, textAlign: "center" },
   emptySubText: { fontSize: 13, textAlign: "center" },
   pendingBanner: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-  },
-  pendingText: { fontSize: 14 },
-  locationBanner: {
-    flexDirection: "row",
-    alignItems: "center",
     gap: 8,
     paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 10,
+    paddingVertical: 10,
+    borderRadius: 12,
     borderWidth: 1,
     marginBottom: 12,
   },
-  locationText: { fontSize: 13 },
-  card: { borderWidth: 1, borderRadius: 16, padding: 16, marginBottom: 16, gap: 16 },
-  cardHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-  routeContainer: { flexDirection: "row", alignItems: "center", flex: 1 },
-  routeText: { fontSize: 18, fontWeight: "700", flexShrink: 1 },
-  distBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
-    marginLeft: 8,
-  },
-  distText: { fontSize: 12, fontWeight: "700" },
-  detailsRow: { flexDirection: "row", justifyContent: "space-between" },
-  label: { fontSize: 12, marginBottom: 4 },
-  value: { fontSize: 14, fontWeight: "500" },
-  footerRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-end", marginTop: 8 },
-  priceText: { fontSize: 24, fontWeight: "900" },
-  commissionText: { fontSize: 12, marginTop: 4 },
-  grabButton: {
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 12,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  grabButtonText: { fontWeight: "800", fontSize: 16 },
+  pendingText: { fontSize: 14, fontWeight: "700", flex: 1 },
+  pendingVip: { fontSize: 12 },
   shareButton: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: 10,
-    paddingVertical: 14,
-    borderRadius: 14,
+    paddingVertical: 18,
+    borderRadius: 16,
     marginBottom: 20,
   },
-  shareButtonText: { fontWeight: "800", fontSize: 16 },
+  shareButtonText: { fontWeight: "900", fontSize: 16, letterSpacing: 0.5 },
+  sectionHeader: { flexDirection: "row", alignItems: "center", marginBottom: 14 },
+  sectionLabel: { fontSize: 15, fontWeight: "600" },
+  sectionCount: { fontSize: 15, fontWeight: "800" },
+  card: { borderWidth: 1, borderRadius: 20, padding: 16, marginBottom: 16, gap: 14 },
+  topRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  statusBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 8,
+  },
+  statusDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: "#22C55E" },
+  statusText: { fontSize: 11, fontWeight: "800", letterSpacing: 0.8, color: "#22C55E" },
+  topRight: { flexDirection: "row", alignItems: "center", gap: 8 },
+  distBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 3,
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    borderRadius: 6,
+  },
+  distText: { fontSize: 11, fontWeight: "700" },
+  timeAgo: { fontSize: 12 },
+  routeBlock: { gap: 4 },
+  routeRow: { flexDirection: "row", alignItems: "center", gap: 10 },
+  routeDotGreen: { width: 12, height: 12, borderRadius: 6, backgroundColor: "#22C55E" },
+  routeConnector: {
+    height: 12,
+    width: 0,
+    borderLeftWidth: 2,
+    borderStyle: "dashed",
+    marginLeft: 5,
+  },
+  routeText: { fontSize: 17, fontWeight: "700", flex: 1 },
+  statsBox: {
+    flexDirection: "row",
+    borderWidth: 1,
+    borderRadius: 12,
+    overflow: "hidden",
+  },
+  statItem: { flex: 1, paddingVertical: 12, paddingHorizontal: 6, alignItems: "center", gap: 5 },
+  statDivider: { width: 1 },
+  statLabel: { fontSize: 9, fontWeight: "700", letterSpacing: 0.3, textAlign: "center" },
+  statValue: { fontSize: 20, fontWeight: "900" },
+  driverRow: { flexDirection: "row", alignItems: "center", gap: 7 },
+  driverText: { fontSize: 13 },
+  privacyRow: { flexDirection: "row", alignItems: "center", gap: 6 },
+  privacyText: { fontSize: 11, fontStyle: "italic" },
+  grabButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    paddingVertical: 16,
+    borderRadius: 14,
+    backgroundColor: "#22C55E",
+    marginTop: 2,
+  },
+  grabButtonText: { fontWeight: "900", fontSize: 18, color: "#FFFFFF", letterSpacing: 0.8 },
 });

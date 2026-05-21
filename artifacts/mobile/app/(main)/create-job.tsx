@@ -27,7 +27,7 @@ export default function CreateJobScreen() {
   };
 
   const handleShare = () => {
-    if (!departure || !destination || !passengerName || !passengerPhone || !totalFare || !commission) {
+    if (!departure || !destination || !passengerName || !passengerPhone || !totalFare) {
       Alert.alert("Hata", "Lütfen tüm alanları doldurun.");
       return;
     }
@@ -42,7 +42,7 @@ export default function CreateJobScreen() {
           passengerName,
           passengerPhone,
           totalFare: Number(totalFare),
-          commission: Number(commission),
+          commission: commission ? Number(commission) : 0,
         },
       },
       {
@@ -103,7 +103,7 @@ export default function CreateJobScreen() {
           />
           <TextInput
             style={[styles.input, styles.flex1, { backgroundColor: colors.input, color: colors.foreground, borderColor: colors.border }]}
-            placeholder="Komisyon (TL)"
+            placeholder="Komisyon (TL) — opsiyonel"
             placeholderTextColor={colors.mutedForeground}
             keyboardType="numeric"
             value={commission}

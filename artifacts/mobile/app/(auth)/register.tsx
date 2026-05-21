@@ -119,7 +119,7 @@ export default function RegisterScreen() {
           </Pressable>
 
           <View style={styles.header}>
-            <Text style={[styles.title, { color: colors.primary }]}>Dogrulama</Text>
+            <Text style={[styles.title, { color: colors.primary }]}>Doğrulama</Text>
             <Text style={[styles.subtitle, { color: colors.mutedForeground }]}>
               {phone} numarasına gönderilen{"\n"}4 haneli kodu girin
             </Text>

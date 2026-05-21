@@ -53,7 +53,7 @@ export default function JobPoolScreen() {
             });
           },
           onError: (err: any) => {
-            Alert.alert("Hata", err?.message || "Is kapilamadi");
+            Alert.alert("Hata", err?.message || "İş kapılamadı");
           },
         }
       );
@@ -99,7 +99,7 @@ export default function JobPoolScreen() {
             <View style={[styles.pendingBanner, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
               <ActivityIndicator size="small" color={colors.primary} />
               <Text style={[styles.pendingText, { color: colors.mutedForeground }]}>
-                {pendingCount} is bekleniyor...
+                {pendingCount} iş bekleniyor...
               </Text>
             </View>
           )}
@@ -117,7 +117,7 @@ export default function JobPoolScreen() {
                   <View style={[styles.locationBanner, { backgroundColor: colors.card, borderColor: colors.border }]}>
                     <Feather name="map-pin" size={14} color={colors.primary} />
                     <Text style={[styles.locationText, { color: colors.mutedForeground }]}>
-                      Yakininizdaki isler once gosteriliyor
+                      Yakınınızdaki işler önce gösteriliyor
                     </Text>
                   </View>
                 )}
@@ -130,7 +130,7 @@ export default function JobPoolScreen() {
                 >
                   <Feather name="plus-circle" size={20} color={colors.primaryForeground} />
                   <Text style={[styles.shareButtonText, { color: colors.primaryForeground }]}>
-                    Is Paylas
+                    İş Paylaş
                   </Text>
                 </Pressable>
               </>
@@ -139,11 +139,11 @@ export default function JobPoolScreen() {
               <View style={styles.center}>
                 <Feather name="inbox" size={48} color={colors.mutedForeground} />
                 <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>
-                  {pendingCount > 0 ? "Yeni isler geliyor..." : "Su an is yok"}
+                  {pendingCount > 0 ? "Yeni işler geliyor..." : "Şu an iş yok"}
                 </Text>
                 {pendingCount > 0 && (
                   <Text style={[styles.emptySubText, { color: colors.mutedForeground }]}>
-                    VIP olarak aninda gormek ister misiniz?
+                    VIP olarak anında görmek ister misiniz?
                   </Text>
                 )}
               </View>
@@ -188,7 +188,7 @@ export default function JobPoolScreen() {
 
                   <View style={styles.detailsRow}>
                     <View>
-                      <Text style={[styles.label, { color: colors.mutedForeground }]}>Olusturan</Text>
+                      <Text style={[styles.label, { color: colors.mutedForeground }]}>Oluşturan</Text>
                       <Text style={[styles.value, { color: colors.foreground }]}>
                         {item.creatorName} ({item.creatorPlate})
                       </Text>
@@ -213,7 +213,7 @@ export default function JobPoolScreen() {
                       {grabMutation.isPending && grabMutation.variables?.id === item.id ? (
                         <ActivityIndicator color={colors.primaryForeground} />
                       ) : (
-                        <Text style={[styles.grabButtonText, { color: colors.primaryForeground }]}>ISI KAP</Text>
+                        <Text style={[styles.grabButtonText, { color: colors.primaryForeground }]}>İŞİ KAP</Text>
                       )}
                     </Pressable>
                   </View>

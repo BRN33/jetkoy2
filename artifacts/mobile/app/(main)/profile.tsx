@@ -48,7 +48,7 @@ export default function ProfileScreen() {
     if (plate.trim() && plate.trim() !== me?.plate) body.plate = plate.trim();
     if (newPassword.trim()) {
       if (!currentPassword.trim()) {
-        Alert.alert("Hata", "Yeni sifre icin mevcut sifrenizi girin.");
+        Alert.alert("Hata", "Yeni şifre için mevcut şifrenizi girin.");
         return;
       }
       body.currentPassword = currentPassword.trim();
@@ -63,9 +63,9 @@ export default function ProfileScreen() {
           queryClient.invalidateQueries({ queryKey: getGetMeQueryKey() });
           if (token) login(token, updated);
           setEditing(false);
-          Alert.alert("Kaydedildi", "Profiliniz guncellendi.");
+          Alert.alert("Kaydedildi", "Profiliniz güncellendi.");
         },
-        onError: (err: any) => Alert.alert("Hata", err?.message || "Guncellenemedi."),
+        onError: (err: any) => Alert.alert("Hata", err?.message || "Güncellenemedi."),
       }
     );
   };
@@ -73,7 +73,7 @@ export default function ProfileScreen() {
   const handlePickAvatar = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== "granted") {
-      Alert.alert("Izin Gerekli", "Fotograf secmek icin galeri iznine ihtiyac var.");
+      Alert.alert("İzin Gerekli", "Fotoğraf seçmek için galeri iznine ihtiyaç var.");
       return;
     }
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -96,7 +96,7 @@ export default function ProfileScreen() {
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ name: fileName, size: asset.fileSize ?? 0, contentType }),
       });
-      if (!urlRes.ok) throw new Error("Yukleme URL alinamadi.");
+      if (!urlRes.ok) throw new Error("Yükleme URL alınamadı.");
       const { uploadURL, objectPath } = await urlRes.json();
 
       // Step 2: upload directly to GCS
@@ -106,7 +106,7 @@ export default function ProfileScreen() {
         headers: { "Content-Type": contentType },
         body: blob,
       });
-      if (!uploadRes.ok) throw new Error("Dosya yuklenemedi.");
+      if (!uploadRes.ok) throw new Error("Dosya yüklenemedi.");
 
       // Step 3: save objectPath as avatarUrl
       const avatarUrl = `/api/storage${objectPath}`;
@@ -119,9 +119,9 @@ export default function ProfileScreen() {
 
       queryClient.invalidateQueries({ queryKey: getGetMeQueryKey() });
       if (token && me) login(token, { ...me, avatarUrl });
-      Alert.alert("Kaydedildi", "Profil resminiz guncellendi.");
+      Alert.alert("Kaydedildi", "Profil resminiz güncellendi.");
     } catch (err: any) {
-      Alert.alert("Hata", err?.message || "Yuklenemedi.");
+      Alert.alert("Hata", err?.message || "Yüklenemedi.");
     } finally {
       setAvatarUploading(false);
     }
@@ -167,7 +167,7 @@ export default function ProfileScreen() {
             <InfoRow
               icon="star"
               label="Durum"
-              value={me.isVip ? "VIP Uye" : "Standart Uye"}
+              value={me.isVip ? "VIP Üye" : "Standart Üye"}
               colors={colors}
               highlight={me.isVip}
             />
@@ -175,22 +175,22 @@ export default function ProfileScreen() {
 
           <Pressable style={[styles.editBtn, { backgroundColor: colors.primary }]} onPress={startEdit}>
             <Feather name="edit-2" size={16} color={colors.primaryForeground} />
-            <Text style={[styles.editBtnText, { color: colors.primaryForeground }]}>Profili Duzenle</Text>
+            <Text style={[styles.editBtnText, { color: colors.primaryForeground }]}>Profili Düzenle</Text>
           </Pressable>
 
           {/* Settings / Legal Section */}
           <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border, marginTop: 8 }]}>
             <Text style={[styles.sectionTitle, { color: colors.mutedForeground, fontSize: 12, marginBottom: 0 }]}>UYGULAMA</Text>
-            <SettingsRow icon="shield" label="Gizlilik Politikasi" onPress={() => router.push("/(main)/privacy" as any)} colors={colors} />
+            <SettingsRow icon="shield" label="Gizlilik Politikası" onPress={() => router.push("/(main)/privacy" as any)} colors={colors} />
             <View style={[styles.divider, { backgroundColor: colors.border }]} />
-            <SettingsRow icon="file-text" label="Kullanim Kosullari" onPress={() => router.push("/(main)/terms" as any)} colors={colors} />
+            <SettingsRow icon="file-text" label="Kullanım Koşulları" onPress={() => router.push("/(main)/terms" as any)} colors={colors} />
             <View style={[styles.divider, { backgroundColor: colors.border }]} />
             <SettingsRow icon="info" label="Hakkinda" onPress={() => router.push("/(main)/about" as any)} colors={colors} />
           </View>
         </>
       ) : (
         <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
-          <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Profili Duzenle</Text>
+          <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Profili Düzenle</Text>
 
           <Text style={[styles.fieldLabel, { color: colors.mutedForeground }]}>Ad Soyad</Text>
           <TextInput
@@ -211,31 +211,31 @@ export default function ProfileScreen() {
             autoCapitalize="characters"
           />
 
-          <Text style={[styles.sectionTitle, { color: colors.foreground, marginTop: 16 }]}>Sifre Degistir (Opsiyonel)</Text>
+          <Text style={[styles.sectionTitle, { color: colors.foreground, marginTop: 16 }]}>Şifre Değiştir (Opsiyonel)</Text>
 
-          <Text style={[styles.fieldLabel, { color: colors.mutedForeground }]}>Mevcut Sifre</Text>
+          <Text style={[styles.fieldLabel, { color: colors.mutedForeground }]}>Mevcut Şifre</Text>
           <TextInput
             style={[styles.input, { backgroundColor: colors.input, color: colors.foreground, borderColor: colors.border }]}
             value={currentPassword}
             onChangeText={setCurrentPassword}
-            placeholder="Mevcut sifreniz"
+            placeholder="Mevcut şifreniz"
             placeholderTextColor={colors.mutedForeground}
             secureTextEntry
           />
 
-          <Text style={[styles.fieldLabel, { color: colors.mutedForeground }]}>Yeni Sifre</Text>
+          <Text style={[styles.fieldLabel, { color: colors.mutedForeground }]}>Yeni Şifre</Text>
           <TextInput
             style={[styles.input, { backgroundColor: colors.input, color: colors.foreground, borderColor: colors.border }]}
             value={newPassword}
             onChangeText={setNewPassword}
-            placeholder="Yeni sifreniz"
+            placeholder="Yeni şifreniz"
             placeholderTextColor={colors.mutedForeground}
             secureTextEntry
           />
 
           <View style={styles.btnRow}>
             <Pressable style={[styles.cancelBtn, { backgroundColor: colors.secondary }]} onPress={cancelEdit}>
-              <Text style={{ color: colors.secondaryForeground, fontWeight: "700" }}>Vazgec</Text>
+              <Text style={{ color: colors.secondaryForeground, fontWeight: "700" }}>Vazgeç</Text>
             </Pressable>
             <Pressable
               style={[styles.saveBtn, { backgroundColor: colors.primary }]}

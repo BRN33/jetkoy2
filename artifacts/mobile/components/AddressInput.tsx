@@ -48,7 +48,7 @@ export function AddressInput({ value, onChangeText, onSelect, placeholder }: Pro
     debounceRef.current = setTimeout(async () => {
       setLoading(true);
       try {
-        const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(text)}&format=json&limit=5&countrycodes=tr&accept-language=tr`;
+        const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(text)}, İstanbul&format=json&limit=6&countrycodes=tr&accept-language=tr&viewbox=28.0,40.7,29.9,41.4&bounded=1`;
         const res = await fetch(url, { headers: { "User-Agent": "JetKoy/1.0" } });
         const data: Suggestion[] = await res.json();
         setSuggestions(data);

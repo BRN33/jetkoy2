@@ -28,7 +28,7 @@ export default function CreateJobScreen() {
 
   const handleShare = () => {
     if (!departure || !destination || !passengerName || !passengerPhone || !totalFare || !commission) {
-      Alert.alert("Hata", "Lutfen tum alanlari doldurun.");
+      Alert.alert("Hata", "Lütfen tüm alanları doldurun.");
       return;
     }
 
@@ -51,7 +51,7 @@ export default function CreateJobScreen() {
           router.back();
         },
         onError: (err: any) => {
-          Alert.alert("Hata", err?.message || "Is paylasilamadi");
+          Alert.alert("Hata", err?.message || "İş paylaşılamadı");
         },
       }
     );
@@ -60,26 +60,26 @@ export default function CreateJobScreen() {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={[styles.header, { borderBottomColor: colors.border, borderBottomWidth: 1 }]}>
-        <Text style={[styles.title, { color: colors.foreground }]}>Yeni Is Paylas</Text>
+        <Text style={[styles.title, { color: colors.foreground }]}>Yeni İş Paylaş</Text>
         <Pressable onPress={() => router.back()} style={styles.closeBtn}>
           <Text style={{ color: colors.mutedForeground, fontSize: 16 }}>Kapat</Text>
         </Pressable>
       </View>
       <KeyboardAwareScrollViewCompat contentContainerStyle={styles.form}>
         <AddressInput
-          placeholder="Kalkis Yeri"
+          placeholder="Kalkış Yeri"
           value={departure}
           onChangeText={(t) => { setDeparture(t); if (!t) { setDepartureLat(null); setDepartureLng(null); } }}
           onSelect={handleDepartureSelect}
         />
         <AddressInput
-          placeholder="Varis Yeri"
+          placeholder="Varış Yeri"
           value={destination}
           onChangeText={setDestination}
         />
         <TextInput
           style={[styles.input, { backgroundColor: colors.input, color: colors.foreground, borderColor: colors.border }]}
-          placeholder="Yolcu Adi"
+          placeholder="Yolcu Adı"
           placeholderTextColor={colors.mutedForeground}
           value={passengerName}
           onChangeText={setPassengerName}
@@ -95,7 +95,7 @@ export default function CreateJobScreen() {
         <View style={styles.row}>
           <TextInput
             style={[styles.input, styles.flex1, { backgroundColor: colors.input, color: colors.foreground, borderColor: colors.border }]}
-            placeholder="Toplam Ucret (TL)"
+            placeholder="Toplam Ücret (TL)"
             placeholderTextColor={colors.mutedForeground}
             keyboardType="numeric"
             value={totalFare}
@@ -119,7 +119,7 @@ export default function CreateJobScreen() {
           {createMutation.isPending ? (
             <ActivityIndicator color={colors.primaryForeground} />
           ) : (
-            <Text style={[styles.buttonText, { color: colors.primaryForeground }]}>Paylas</Text>
+            <Text style={[styles.buttonText, { color: colors.primaryForeground }]}>Paylaş</Text>
           )}
         </Pressable>
       </KeyboardAwareScrollViewCompat>

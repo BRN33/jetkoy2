@@ -1,5 +1,6 @@
 import app from "./app";
 import { logger } from "./lib/logger";
+import { startCleanupScheduler } from "./cleanup";
 
 const rawPort = process.env["PORT"];
 
@@ -22,4 +23,5 @@ app.listen(port, (err) => {
   }
 
   logger.info({ port }, "Server listening");
+  startCleanupScheduler();
 });

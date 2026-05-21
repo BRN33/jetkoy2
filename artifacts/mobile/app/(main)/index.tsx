@@ -113,19 +113,28 @@ export default function JobPoolScreen() {
 
   const pendingCount = user?.isVip ? 0 : allJobs.length - visibleJobs.length;
 
-  const sortedJobs = location
-    ? [...visibleJobs].sort((a, b) => {
-        const aLat = a.departureLat;
-        const aLng = a.departureLng;
-        const bLat = b.departureLat;
-        const bLng = b.departureLng;
-        if (aLat == null || aLng == null) return 1;
-        if (bLat == null || bLng == null) return -1;
-        const dA = haversineKm(location.lat, location.lng, aLat, aLng);
-        const dB = haversineKm(location.lat, location.lng, bLat, bLng);
-        return dA - dB;
-      })
-    : visibleJobs;
+  const sortedJobs = [...visibleJobs].sort((a, b) => {
+    const aLat = a.departureLat;
+    const aLng = a.departureLng;
+    const bLat = b.departureLat;
+    const bLng = b.departureLng;
+    const aHasCoords = aLat != null && aLng != null;
+    const bHasCoords = bLat != null && bLng != null;
+
+    if (location) {
+      if (aHasCoords && bHasCoords) {
+        const dA = haversineKm(location.lat, location.lng, aLat!, aLng!);
+        const dB = haversineKm(location.lat, location.lng, bLat!, bLng!);
+        if (Math.abs(dA - dB) > 0.05) return dA - dB;
+      } else if (aHasCoords) {
+        return -1;
+      } else if (bHasCoords) {
+        return 1;
+      }
+    }
+
+    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+  });
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>

@@ -4,7 +4,7 @@ import {
   Text,
   TextInput,
   Pressable,
-  FlatList,
+  ScrollView,
   StyleSheet,
   ActivityIndicator,
 } from "react-native";
@@ -36,6 +36,7 @@ export function AddressInput({ value, onChangeText, onSelect, placeholder }: Pro
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const suppressBlurRef = useRef(false);
 
   const search = useCallback((text: string) => {
     onChangeText(text);
@@ -48,7 +49,7 @@ export function AddressInput({ value, onChangeText, onSelect, placeholder }: Pro
     debounceRef.current = setTimeout(async () => {
       setLoading(true);
       try {
-        const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(text)}, İstanbul&format=json&limit=6&countrycodes=tr&accept-language=tr&viewbox=28.0,40.7,29.9,41.4&bounded=1`;
+        const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(text)}, Istanbul&format=json&limit=5&countrycodes=tr&accept-language=tr&viewbox=28.0,40.7,29.9,41.4&bounded=1`;
         const res = await fetch(url, { headers: { "User-Agent": "JetKoy/1.0" } });
         const data: Suggestion[] = await res.json();
         setSuggestions(data);
@@ -63,11 +64,24 @@ export function AddressInput({ value, onChangeText, onSelect, placeholder }: Pro
   }, [onChangeText]);
 
   const pick = (item: Suggestion) => {
+    suppressBlurRef.current = true;
     const short = item.display_name.split(",").slice(0, 2).join(",").trim();
     onChangeText(short);
     onSelect?.({ text: short, lat: parseFloat(item.lat), lng: parseFloat(item.lon) });
     setSuggestions([]);
     setOpen(false);
+    setTimeout(() => { suppressBlurRef.current = false; }, 300);
+  };
+
+  const handleBlur = () => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    setLoading(false);
+    setTimeout(() => {
+      if (!suppressBlurRef.current) {
+        setSuggestions([]);
+        setOpen(false);
+      }
+    }, 150);
   };
 
   return (
@@ -80,31 +94,31 @@ export function AddressInput({ value, onChangeText, onSelect, placeholder }: Pro
           value={value}
           onChangeText={search}
           onFocus={() => suggestions.length > 0 && setOpen(true)}
-          onBlur={() => setTimeout(() => setOpen(false), 200)}
+          onBlur={handleBlur}
           autoCorrect={false}
+          returnKeyType="done"
         />
         {loading && <ActivityIndicator size="small" color={colors.mutedForeground} style={{ marginRight: 12 }} />}
       </View>
-      {open && (
+      {open && suggestions.length > 0 && (
         <View style={[styles.dropdown, { backgroundColor: colors.card, borderColor: colors.border }]}>
-          <FlatList
-            data={suggestions}
-            keyExtractor={(item) => item.place_id}
-            keyboardShouldPersistTaps="handled"
-            renderItem={({ item, index }) => (
+          <ScrollView keyboardShouldPersistTaps="handled" nestedScrollEnabled bounces={false}>
+            {suggestions.map((item, index) => (
               <Pressable
+                key={item.place_id}
                 onPress={() => pick(item)}
+                onPressIn={() => { suppressBlurRef.current = true; }}
                 style={[
                   styles.item,
                   index < suggestions.length - 1 && { borderBottomWidth: 1, borderBottomColor: colors.border },
                 ]}
               >
                 <Text style={[styles.itemText, { color: colors.foreground }]} numberOfLines={2}>
-                  {item.display_name}
+                  {item.display_name.split(",").slice(0, 3).join(",")}
                 </Text>
               </Pressable>
-            )}
-          />
+            ))}
+          </ScrollView>
         </View>
       )}
     </View>
@@ -133,7 +147,7 @@ const styles = StyleSheet.create({
     right: 0,
     borderWidth: 1,
     borderRadius: 12,
-    maxHeight: 200,
+    maxHeight: 210,
     overflow: "hidden",
     zIndex: 100,
     elevation: 8,

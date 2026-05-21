@@ -23,6 +23,7 @@ function formatJob(job: {
   passengerPhone: string;
   totalFare: string;
   commission: string;
+  voiceNoteUrl: string | null;
   status: string;
   grabbedById: number | null;
   createdAt: Date;
@@ -40,6 +41,7 @@ function formatJob(job: {
     passengerPhoneMasked: masked ? maskPhone(job.passengerPhone) : job.passengerPhone,
     totalFare: parseFloat(job.totalFare),
     commission: parseFloat(job.commission),
+    voiceNoteUrl: job.voiceNoteUrl ?? null,
     status: job.status as "available" | "grabbed",
     createdAt: job.createdAt.toISOString(),
   };
@@ -72,7 +74,7 @@ router.post("/jobs", requireAuth, async (req: AuthRequest, res): Promise<void> =
     return;
   }
 
-  const { departure, destination, departureLat, departureLng, passengerName, passengerPhone, totalFare, commission } = parsed.data;
+  const { departure, destination, departureLat, departureLng, passengerName, passengerPhone, totalFare, commission, voiceNoteUrl } = parsed.data;
 
   const [job] = await db
     .insert(jobsTable)
@@ -86,6 +88,7 @@ router.post("/jobs", requireAuth, async (req: AuthRequest, res): Promise<void> =
       passengerPhone,
       totalFare: String(totalFare),
       commission: String(commission),
+      voiceNoteUrl: voiceNoteUrl ?? null,
       status: "available",
     })
     .returning();

@@ -15,4 +15,5 @@ export interface CreateJobRequest {
   passengerPhone: string;
   totalFare: number;
   commission: number;
+  voiceNoteUrl?: string | null;
 }

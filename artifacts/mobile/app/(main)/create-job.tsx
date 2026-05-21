@@ -6,6 +6,7 @@ import { useColors } from "@/hooks/useColors";
 import { KeyboardAwareScrollViewCompat } from "@/components/KeyboardAwareScrollViewCompat";
 import { useQueryClient } from "@tanstack/react-query";
 import { AddressInput, type AddressResult } from "@/components/AddressInput";
+import { VoiceRecorder } from "@/components/VoiceRecorder";
 
 export default function CreateJobScreen() {
   const colors = useColors();
@@ -20,6 +21,7 @@ export default function CreateJobScreen() {
   const [passengerPhone, setPassengerPhone] = useState("");
   const [totalFare, setTotalFare] = useState("");
   const [commission, setCommission] = useState("");
+  const [voiceNoteUrl, setVoiceNoteUrl] = useState<string | null>(null);
 
   const handleDepartureSelect = (result: AddressResult) => {
     setDepartureLat(result.lat);
@@ -43,6 +45,7 @@ export default function CreateJobScreen() {
           passengerPhone,
           totalFare: Number(totalFare),
           commission: commission ? Number(commission) : 0,
+          voiceNoteUrl: voiceNoteUrl ?? undefined,
         },
       },
       {
@@ -110,6 +113,8 @@ export default function CreateJobScreen() {
             onChangeText={setCommission}
           />
         </View>
+
+        <VoiceRecorder voiceNoteUrl={voiceNoteUrl} onVoiceNoteUrl={setVoiceNoteUrl} />
 
         <Pressable
           style={[styles.button, { backgroundColor: colors.primary, borderRadius: colors.radius }]}

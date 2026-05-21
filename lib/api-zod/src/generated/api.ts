@@ -167,6 +167,7 @@ export const ListJobsResponseItem = zod.object({
   "totalFare": zod.number(),
   "commission": zod.number(),
   "status": zod.enum(['available', 'grabbed']),
+  "voiceNoteUrl": zod.string().nullish(),
   "createdAt": zod.string()
 })
 export const ListJobsResponse = zod.array(ListJobsResponseItem)
@@ -183,7 +184,8 @@ export const CreateJobBody = zod.object({
   "passengerName": zod.string(),
   "passengerPhone": zod.string(),
   "totalFare": zod.number(),
-  "commission": zod.number()
+  "commission": zod.number(),
+  "voiceNoteUrl": zod.string().nullish()
 })
 
 
@@ -257,6 +259,7 @@ export const GetMyJobsResponse = zod.object({
   "totalFare": zod.number(),
   "commission": zod.number(),
   "status": zod.enum(['available', 'grabbed']),
+  "voiceNoteUrl": zod.string().nullish(),
   "createdAt": zod.string()
 })),
   "grabbedJobs": zod.array(zod.object({
@@ -273,6 +276,7 @@ export const GetMyJobsResponse = zod.object({
   "totalFare": zod.number(),
   "commission": zod.number(),
   "status": zod.enum(['available', 'grabbed']),
+  "voiceNoteUrl": zod.string().nullish(),
   "createdAt": zod.string()
 }))
 })

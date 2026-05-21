@@ -14,6 +14,7 @@ export const jobsTable = pgTable("jobs", {
   commission: numeric("commission", { precision: 10, scale: 2 }).notNull(),
   departureLat: doublePrecision("departure_lat"),
   departureLng: doublePrecision("departure_lng"),
+  voiceNoteUrl: text("voice_note_url"),
   status: text("status").notNull().default("available"),
   grabbedById: integer("grabbed_by_id").references(() => usersTable.id),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),

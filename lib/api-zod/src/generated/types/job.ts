@@ -21,5 +21,6 @@ export interface Job {
   totalFare: number;
   commission: number;
   status: JobStatus;
+  voiceNoteUrl?: string | null;
   createdAt: string;
 }

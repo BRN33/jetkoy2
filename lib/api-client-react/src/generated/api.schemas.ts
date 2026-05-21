@@ -69,6 +69,7 @@ export interface Job {
   totalFare: number;
   commission: number;
   status: JobStatus;
+  voiceNoteUrl?: string | null;
   createdAt: string;
 }
 
@@ -111,6 +112,7 @@ export interface CreateJobRequest {
   passengerPhone: string;
   totalFare: number;
   commission: number;
+  voiceNoteUrl?: string | null;
 }
 
 export interface MyJobsSummary {

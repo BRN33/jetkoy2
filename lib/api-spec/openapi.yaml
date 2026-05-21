@@ -945,6 +945,9 @@ components:
         status:
           type: string
           enum: [available, grabbed]
+        voiceNoteUrl:
+          type: string
+          nullable: true
         createdAt:
           type: string
       required:
@@ -1041,6 +1044,9 @@ components:
           type: number
         commission:
           type: number
+        voiceNoteUrl:
+          type: string
+          nullable: true
       required:
         - departure
         - destination

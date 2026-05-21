@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { View, Text, StyleSheet, FlatList, Pressable, ActivityIndicator, RefreshControl, Alert } from "react-native";
 import { useListJobs, useGrabJob, getListJobsQueryKey, getGetMeQueryKey } from "@workspace/api-client-react";
 import { useColors } from "@/hooks/useColors";
@@ -8,6 +8,7 @@ import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
 import { useQueryClient } from "@tanstack/react-query";
+import { Audio } from "expo-av";
 
 function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
   const R = 6371;
@@ -42,11 +43,41 @@ export default function JobPoolScreen() {
   });
   const grabMutation = useGrabJob();
   const [now, setNow] = useState(Date.now());
+  const soundRef = useRef<Audio.Sound | null>(null);
+  const [playingJobId, setPlayingJobId] = useState<string | null>(null);
 
   useEffect(() => {
     const timer = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(timer);
   }, []);
+
+  useEffect(() => {
+    return () => {
+      soundRef.current?.unloadAsync();
+    };
+  }, []);
+
+  const handlePlayVoice = useCallback(async (jobId: string, url: string) => {
+    if (playingJobId === jobId) {
+      await soundRef.current?.pauseAsync();
+      setPlayingJobId(null);
+      return;
+    }
+    await soundRef.current?.unloadAsync();
+    soundRef.current = null;
+    setPlayingJobId(null);
+    try {
+      const { sound } = await Audio.Sound.createAsync({ uri: url }, { shouldPlay: true });
+      soundRef.current = sound;
+      setPlayingJobId(jobId);
+      sound.setOnPlaybackStatusUpdate((status) => {
+        if (!status.isLoaded) return;
+        if (status.didJustFinish) setPlayingJobId(null);
+      });
+    } catch {
+      Alert.alert("Hata", "Ses dosyası oynatılamadı");
+    }
+  }, [playingJobId]);
 
   const handleGrab = useCallback(
     (jobId: string) => {
@@ -235,6 +266,23 @@ export default function JobPoolScreen() {
                   </Text>
                 </View>
 
+                {/* Voice note playback */}
+                {item.voiceNoteUrl && (
+                  <Pressable
+                    style={[styles.voiceBtn, { backgroundColor: colors.secondary, borderColor: colors.border }]}
+                    onPress={() => handlePlayVoice(item.id, item.voiceNoteUrl!)}
+                  >
+                    <Feather
+                      name={playingJobId === item.id ? "pause-circle" : "play-circle"}
+                      size={18}
+                      color={colors.primary}
+                    />
+                    <Text style={[styles.voiceBtnText, { color: colors.primary }]}>
+                      {playingJobId === item.id ? "Duraklat" : "Sesli Notu Dinle"}
+                    </Text>
+                  </Pressable>
+                )}
+
                 {/* Grab button */}
                 <Pressable
                   style={({ pressed }) => [
@@ -353,4 +401,14 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   grabButtonText: { fontWeight: "900", fontSize: 18, color: "#FFFFFF", letterSpacing: 0.8 },
+  voiceBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 10,
+    borderWidth: 1,
+  },
+  voiceBtnText: { fontWeight: "600", fontSize: 14 },
 });

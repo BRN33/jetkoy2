@@ -1,6 +1,7 @@
 import app from "./app";
 import { logger } from "./lib/logger";
 import { startCleanupScheduler } from "./cleanup";
+import { seedAdmin } from "./seed";
 
 const rawPort = process.env["PORT"];
 
@@ -24,4 +25,5 @@ app.listen(port, (err) => {
 
   logger.info({ port }, "Server listening");
   startCleanupScheduler();
+  seedAdmin().catch((err) => logger.error({ err }, "Admin seed basarisiz"));
 });

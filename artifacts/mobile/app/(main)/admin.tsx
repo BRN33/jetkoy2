@@ -10,6 +10,8 @@ import {
   TextInput,
   Alert,
   ScrollView,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import {
   useAdminListUsers,
@@ -29,7 +31,7 @@ import { useColors } from "@/hooks/useColors";
 import { Feather } from "@expo/vector-icons";
 import { useQueryClient } from "@tanstack/react-query";
 
-type AdminTab = "users" | "messages";
+type AdminTab = "users" | "members";
 type UserModal = "credits" | "send-message" | "edit" | null;
 
 interface ConversationUser {
@@ -333,18 +335,13 @@ export default function AdminScreen() {
           </Text>
         </Pressable>
         <Pressable
-          style={[styles.tab, activeTab === "messages" && { borderBottomColor: colors.primary }]}
-          onPress={() => setActiveTab("messages")}
+          style={[styles.tab, activeTab === "members" && { borderBottomColor: colors.primary }]}
+          onPress={() => setActiveTab("members")}
         >
-          <Feather name="message-circle" size={16} color={activeTab === "messages" ? colors.primary : colors.mutedForeground} />
-          <Text style={[styles.tabText, { color: activeTab === "messages" ? colors.primary : colors.mutedForeground }]}>
-            Mesajlar
+          <Feather name="users" size={16} color={activeTab === "members" ? colors.primary : colors.mutedForeground} />
+          <Text style={[styles.tabText, { color: activeTab === "members" ? colors.primary : colors.mutedForeground }]}>
+            Üyeler
           </Text>
-          {totalUnread > 0 && (
-            <View style={[styles.badge, { backgroundColor: colors.destructive }]}>
-              <Text style={[styles.badgeText, { color: colors.destructiveForeground }]}>{totalUnread}</Text>
-            </View>
-          )}
         </Pressable>
       </View>
 
@@ -415,62 +412,52 @@ export default function AdminScreen() {
           />
         </>
       ) : (
-        /* Messages tab — grouped by sender */
-        <FlatList
-          data={conversations}
-          keyExtractor={(item) => item.senderId}
-          contentContainerStyle={styles.list}
-          ListEmptyComponent={
-            <View style={styles.center}>
-              <Feather name="inbox" size={48} color={colors.mutedForeground} />
-              <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>Mesaj yok</Text>
-            </View>
-          }
-          renderItem={({ item: conv }) => {
-            const latest = conv.messages[0];
-            return (
-              <Pressable
-                style={({ pressed }) => [
-                  styles.convCard,
-                  {
-                    backgroundColor: colors.card,
-                    borderColor: conv.unreadCount > 0 ? colors.primary : colors.border,
-                    borderRadius: colors.radius,
-                    opacity: pressed ? 0.85 : 1,
-                  },
-                ]}
-                onPress={() => setOpenConversation(conv)}
-              >
-                <View style={styles.convHeader}>
-                  <View style={{ flex: 1 }}>
-                    <Text style={[styles.senderName, { color: colors.foreground }]}>{conv.senderName}</Text>
-                    <Text style={[styles.senderInfo, { color: colors.mutedForeground }]}>
-                      {conv.senderPhone} · {conv.senderPlate}
-                    </Text>
-                  </View>
-                  <View style={styles.convMeta}>
-                    {conv.unreadCount > 0 && (
-                      <View style={[styles.badge, { backgroundColor: colors.primary }]}>
-                        <Text style={[styles.badgeText, { color: colors.primaryForeground }]}>{conv.unreadCount}</Text>
+        /* Members tab — all registered users sorted by newest */
+        <>
+          <View style={[styles.membersHeader, { borderBottomColor: colors.border }]}>
+            <Text style={[styles.membersCount, { color: colors.mutedForeground }]}>
+              {users ? `${users.length} üye kayıtlı` : "Yükleniyor..."}
+            </Text>
+          </View>
+          <FlatList
+            data={useMemo(
+              () => users ? [...users].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()) : [],
+              [users]
+            )}
+            keyExtractor={(item) => item.id}
+            contentContainerStyle={styles.list}
+            ListEmptyComponent={
+              <View style={styles.center}>
+                <Feather name="users" size={48} color={colors.mutedForeground} />
+                <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>Kayıtlı üye yok</Text>
+              </View>
+            }
+            renderItem={({ item }) => (
+              <View style={[styles.memberCard, { backgroundColor: colors.card, borderColor: colors.border, borderRadius: colors.radius }]}>
+                <View style={styles.memberTop}>
+                  <View style={styles.memberTitleRow}>
+                    <Text style={[styles.memberName, { color: colors.foreground }]}>{item.fullName}</Text>
+                    {item.isVip && (
+                      <View style={[styles.vipBadge, { backgroundColor: colors.primary }]}>
+                        <Text style={[styles.vipText, { color: colors.primaryForeground }]}>VIP</Text>
                       </View>
                     )}
-                    <Text style={[styles.convCount, { color: colors.mutedForeground }]}>
-                      {conv.messages.length} mesaj
-                    </Text>
+                    {item.isAdmin && (
+                      <View style={[styles.vipBadge, { backgroundColor: colors.secondary }]}>
+                        <Text style={[styles.vipText, { color: colors.secondaryForeground }]}>ADMIN</Text>
+                      </View>
+                    )}
                   </View>
+                  <Text style={[styles.memberCredits, { color: colors.primary }]}>{item.credits} Kr</Text>
                 </View>
-                {latest && (
-                  <Text style={[styles.convPreview, { color: colors.mutedForeground }]} numberOfLines={2}>
-                    {latest.content}
-                  </Text>
-                )}
-                <Text style={[styles.convTime, { color: colors.mutedForeground }]}>
-                  {latest ? new Date(latest.createdAt).toLocaleString("tr-TR") : ""}
+                <Text style={[styles.memberInfo, { color: colors.mutedForeground }]}>{item.phone} · {item.plate}</Text>
+                <Text style={[styles.memberDate, { color: colors.mutedForeground }]}>
+                  Kayıt: {new Date(item.createdAt).toLocaleDateString("tr-TR")}
                 </Text>
-              </Pressable>
-            );
-          }}
-        />
+              </View>
+            )}
+          />
+        </>
       )}
 
       {/* Conversation detail modal */}
@@ -555,6 +542,10 @@ export default function AdminScreen() {
 
       {/* Edit User Modal */}
       <Modal visible={userModal === "edit"} animationType="slide" transparent>
+        <KeyboardAvoidingView
+          style={{ flex: 1 }}
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+        >
         <View style={styles.modalOverlay}>
           <View style={[styles.modalContent, { backgroundColor: colors.background, borderRadius: colors.radius, borderColor: colors.border }]}>
             <Text style={[styles.modalTitle, { color: colors.foreground }]}>Kullaniciyi Duzenle</Text>
@@ -617,10 +608,15 @@ export default function AdminScreen() {
             </View>
           </View>
         </View>
+        </KeyboardAvoidingView>
       </Modal>
 
       {/* Credits Modal */}
       <Modal visible={userModal === "credits"} animationType="slide" transparent>
+        <KeyboardAvoidingView
+          style={{ flex: 1 }}
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+        >
         <View style={styles.modalOverlay}>
           <View style={[styles.modalContent, { backgroundColor: colors.background, borderRadius: colors.radius, borderColor: colors.border }]}>
             <Text style={[styles.modalTitle, { color: colors.foreground }]}>Kredi Ekle</Text>
@@ -650,10 +646,15 @@ export default function AdminScreen() {
             </View>
           </View>
         </View>
+        </KeyboardAvoidingView>
       </Modal>
 
       {/* Send Message Modal */}
       <Modal visible={userModal === "send-message"} animationType="slide" transparent>
+        <KeyboardAvoidingView
+          style={{ flex: 1 }}
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+        >
         <View style={styles.modalOverlay}>
           <View style={[styles.modalContent, { backgroundColor: colors.background, borderRadius: colors.radius, borderColor: colors.border }]}>
             <Text style={[styles.modalTitle, { color: colors.foreground }]}>Mesaj Gonder</Text>
@@ -677,6 +678,7 @@ export default function AdminScreen() {
             </View>
           </View>
         </View>
+        </KeyboardAvoidingView>
       </Modal>
 
       {/* Reply Modal */}
@@ -768,6 +770,16 @@ const styles = StyleSheet.create({
   smallBtn: { flexDirection: "row", alignItems: "center", gap: 5, paddingHorizontal: 10, paddingVertical: 7 },
   smallBtnText: { fontSize: 12, fontWeight: "700" },
   toggleBtn: { flex: 1, paddingVertical: 12, alignItems: "center", borderRadius: 8 },
+  // Members tab
+  membersHeader: { paddingHorizontal: 16, paddingVertical: 10, borderBottomWidth: 1 },
+  membersCount: { fontSize: 13 },
+  memberCard: { padding: 14, borderWidth: 1, gap: 6 },
+  memberTop: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  memberTitleRow: { flexDirection: "row", alignItems: "center", gap: 8, flex: 1, flexWrap: "wrap" },
+  memberName: { fontSize: 16, fontWeight: "700" },
+  memberCredits: { fontSize: 16, fontWeight: "800" },
+  memberInfo: { fontSize: 13 },
+  memberDate: { fontSize: 12 },
   // Modals
   modalOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.6)", justifyContent: "center", padding: 24 },
   modalContent: { padding: 24, borderWidth: 1 },

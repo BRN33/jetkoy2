@@ -19,6 +19,14 @@ import { Feather } from "@expo/vector-icons";
 
 type Step = "form" | "otp";
 
+function formatPhone(raw: string): string {
+  const digits = raw.replace(/\D/g, "").slice(0, 10);
+  if (digits.length <= 3) return digits;
+  if (digits.length <= 6) return `${digits.slice(0, 3)} ${digits.slice(3)}`;
+  if (digits.length <= 8) return `${digits.slice(0, 3)} ${digits.slice(3, 6)} ${digits.slice(6)}`;
+  return `${digits.slice(0, 3)} ${digits.slice(3, 6)} ${digits.slice(6, 8)} ${digits.slice(8)}`;
+}
+
 export default function RegisterScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
@@ -38,8 +46,13 @@ export default function RegisterScreen() {
   const sendOtpMutation = useSendOtp();
   const verifyOtpMutation = useVerifyOtp();
 
+  const handlePhoneChange = (text: string) => {
+    setPhone(formatPhone(text));
+  };
+
   const handleSendOtp = () => {
-    if (!fullName.trim() || !phone.trim() || !plate.trim() || !password.trim()) {
+    const rawPhone = phone.replace(/\s/g, "");
+    if (!fullName.trim() || !rawPhone || !plate.trim() || !password.trim()) {
       Alert.alert("Hata", "Lütfen tüm alanları doldurun.");
       return;
     }
@@ -49,7 +62,7 @@ export default function RegisterScreen() {
     }
 
     sendOtpMutation.mutate(
-      { data: { phone: phone.trim() } },
+      { data: { phone: rawPhone } },
       {
         onSuccess: (data) => {
           setDevCode(data.devCode ?? null);
@@ -80,6 +93,7 @@ export default function RegisterScreen() {
 
   const handleVerify = () => {
     const code = otp.join("");
+    const rawPhone = phone.replace(/\s/g, "");
     if (code.length < 4) {
       Alert.alert("Hata", "Lütfen 4 haneli kodu girin.");
       return;
@@ -89,7 +103,7 @@ export default function RegisterScreen() {
       {
         data: {
           fullName: fullName.trim(),
-          phone: phone.trim(),
+          phone: rawPhone,
           plate: plate.trim().toUpperCase(),
           password,
           code,
@@ -199,38 +213,51 @@ export default function RegisterScreen() {
         </View>
 
         <View style={styles.form}>
-          <TextInput
-            style={[styles.input, { backgroundColor: colors.input, color: colors.foreground, borderColor: colors.border }]}
-            placeholder="Ad Soyad"
-            placeholderTextColor={colors.mutedForeground}
-            value={fullName}
-            onChangeText={setFullName}
-            autoCapitalize="words"
-          />
-          <TextInput
-            style={[styles.input, { backgroundColor: colors.input, color: colors.foreground, borderColor: colors.border }]}
-            placeholder="Telefon Numarası"
-            placeholderTextColor={colors.mutedForeground}
-            keyboardType="phone-pad"
-            value={phone}
-            onChangeText={setPhone}
-          />
-          <TextInput
-            style={[styles.input, { backgroundColor: colors.input, color: colors.foreground, borderColor: colors.border }]}
-            placeholder="Araç Plakası"
-            placeholderTextColor={colors.mutedForeground}
-            autoCapitalize="characters"
-            value={plate}
-            onChangeText={setPlate}
-          />
-          <TextInput
-            style={[styles.input, { backgroundColor: colors.input, color: colors.foreground, borderColor: colors.border }]}
-            placeholder="Şifre (en az 6 karakter)"
-            placeholderTextColor={colors.mutedForeground}
-            secureTextEntry
-            value={password}
-            onChangeText={setPassword}
-          />
+          <View>
+            <Text style={[styles.fieldLabel, { color: colors.mutedForeground }]}>Ad Soyad</Text>
+            <TextInput
+              style={[styles.input, { backgroundColor: colors.input, color: colors.foreground, borderColor: colors.border }]}
+              placeholder="Ad Soyad"
+              placeholderTextColor={colors.mutedForeground}
+              value={fullName}
+              onChangeText={setFullName}
+              autoCapitalize="words"
+            />
+          </View>
+          <View>
+            <Text style={[styles.fieldLabel, { color: colors.mutedForeground }]}>Telefon</Text>
+            <TextInput
+              style={[styles.input, { backgroundColor: colors.input, color: colors.foreground, borderColor: colors.border }]}
+              placeholder="5XX XXX XX XX"
+              placeholderTextColor={colors.mutedForeground}
+              keyboardType="phone-pad"
+              value={phone}
+              onChangeText={handlePhoneChange}
+              maxLength={13}
+            />
+          </View>
+          <View>
+            <Text style={[styles.fieldLabel, { color: colors.mutedForeground }]}>Araç Plakası</Text>
+            <TextInput
+              style={[styles.input, { backgroundColor: colors.input, color: colors.foreground, borderColor: colors.border }]}
+              placeholder="34 ABC 123"
+              placeholderTextColor={colors.mutedForeground}
+              autoCapitalize="characters"
+              value={plate}
+              onChangeText={setPlate}
+            />
+          </View>
+          <View>
+            <Text style={[styles.fieldLabel, { color: colors.mutedForeground }]}>Şifre</Text>
+            <TextInput
+              style={[styles.input, { backgroundColor: colors.input, color: colors.foreground, borderColor: colors.border }]}
+              placeholder="En az 6 karakter"
+              placeholderTextColor={colors.mutedForeground}
+              secureTextEntry
+              value={password}
+              onChangeText={setPassword}
+            />
+          </View>
 
           <Pressable
             style={[styles.button, { backgroundColor: colors.primary, borderRadius: colors.radius }]}
@@ -265,7 +292,8 @@ const styles = StyleSheet.create({
   header: { marginBottom: 40, alignItems: "center" },
   title: { fontSize: 32, fontWeight: "800", letterSpacing: -0.5 },
   subtitle: { fontSize: 15, marginTop: 8, textAlign: "center", lineHeight: 22 },
-  form: { gap: 16 },
+  form: { gap: 14 },
+  fieldLabel: { fontSize: 13, fontWeight: "500", marginBottom: 6 },
   input: {
     height: 56,
     borderWidth: 1,

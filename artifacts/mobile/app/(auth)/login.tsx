@@ -7,6 +7,14 @@ import { useColors } from "@/hooks/useColors";
 import { KeyboardAwareScrollViewCompat } from "@/components/KeyboardAwareScrollViewCompat";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+function formatPhone(raw: string): string {
+  const digits = raw.replace(/\D/g, "").slice(0, 10);
+  if (digits.length <= 3) return digits;
+  if (digits.length <= 6) return `${digits.slice(0, 3)} ${digits.slice(3)}`;
+  if (digits.length <= 8) return `${digits.slice(0, 3)} ${digits.slice(3, 6)} ${digits.slice(6)}`;
+  return `${digits.slice(0, 3)} ${digits.slice(3, 6)} ${digits.slice(6, 8)} ${digits.slice(8)}`;
+}
+
 export default function LoginScreen() {
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
@@ -15,13 +23,18 @@ export default function LoginScreen() {
   const { login } = useAuth();
   const loginMutation = useLoginUser();
 
+  const handlePhoneChange = (text: string) => {
+    setPhone(formatPhone(text));
+  };
+
   const handleLogin = () => {
-    if (!phone || !password) {
+    const rawPhone = phone.replace(/\s/g, "");
+    if (!rawPhone || !password) {
       Alert.alert("Hata", "Lütfen tüm alanları doldurun.");
       return;
     }
     loginMutation.mutate(
-      { data: { phone, password } },
+      { data: { phone: rawPhone, password } },
       {
         onSuccess: async (data) => {
           await login(data.token, data.user);
@@ -43,22 +56,29 @@ export default function LoginScreen() {
         </View>
 
         <View style={styles.form}>
-          <TextInput
-            style={[styles.input, { backgroundColor: colors.input, color: colors.foreground, borderColor: colors.border }]}
-            placeholder="Telefon Numarası"
-            placeholderTextColor={colors.mutedForeground}
-            keyboardType="phone-pad"
-            value={phone}
-            onChangeText={setPhone}
-          />
-          <TextInput
-            style={[styles.input, { backgroundColor: colors.input, color: colors.foreground, borderColor: colors.border }]}
-            placeholder="Şifre"
-            placeholderTextColor={colors.mutedForeground}
-            secureTextEntry
-            value={password}
-            onChangeText={setPassword}
-          />
+          <View>
+            <Text style={[styles.fieldLabel, { color: colors.mutedForeground }]}>Telefon</Text>
+            <TextInput
+              style={[styles.input, { backgroundColor: colors.input, color: colors.foreground, borderColor: colors.border }]}
+              placeholder="5XX XXX XX XX"
+              placeholderTextColor={colors.mutedForeground}
+              keyboardType="phone-pad"
+              value={phone}
+              onChangeText={handlePhoneChange}
+              maxLength={13}
+            />
+          </View>
+          <View>
+            <Text style={[styles.fieldLabel, { color: colors.mutedForeground }]}>Şifre</Text>
+            <TextInput
+              style={[styles.input, { backgroundColor: colors.input, color: colors.foreground, borderColor: colors.border }]}
+              placeholder="Şifre"
+              placeholderTextColor={colors.mutedForeground}
+              secureTextEntry
+              value={password}
+              onChangeText={setPassword}
+            />
+          </View>
 
           <Pressable
             style={[styles.button, { backgroundColor: colors.primary, borderRadius: colors.radius }]}
@@ -91,6 +111,7 @@ const styles = StyleSheet.create({
   title: { fontSize: 48, fontWeight: "900", letterSpacing: -1 },
   subtitle: { fontSize: 16, marginTop: 8 },
   form: { gap: 16 },
+  fieldLabel: { fontSize: 13, fontWeight: "500", marginBottom: 6 },
   input: {
     height: 56,
     borderWidth: 1,

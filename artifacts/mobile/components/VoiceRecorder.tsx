@@ -5,7 +5,17 @@ import { Feather } from "@expo/vector-icons";
 import { useColors } from "@/hooks/useColors";
 import { useAuth } from "@/contexts/AuthContext";
 
-const MAX_DURATION_MS = 60000; // 60 saniye
+const MAX_DURATION_MS = 60000;
+
+function getApiBase(): string {
+  if (process.env.EXPO_PUBLIC_API_URL) {
+    return process.env.EXPO_PUBLIC_API_URL.replace(/\/+$/, "");
+  }
+  if (process.env.EXPO_PUBLIC_DOMAIN) {
+    return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
+  }
+  return "";
+}
 
 interface Props {
   voiceNoteUrl: string | null;
@@ -87,7 +97,9 @@ export function VoiceRecorder({ voiceNoteUrl, onVoiceNoteUrl }: Props) {
       if (!uri) throw new Error("Kayıt URI alınamadı");
 
       const fileName = `voice_${Date.now()}.m4a`;
-      const urlRes = await fetch("/api/storage/uploads/request-url", {
+      const apiBase = getApiBase();
+
+      const urlRes = await fetch(`${apiBase}/api/storage/uploads/request-url`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ name: fileName, size: 0, contentType: "audio/mp4" }),
@@ -103,7 +115,7 @@ export function VoiceRecorder({ voiceNoteUrl, onVoiceNoteUrl }: Props) {
       });
       if (!uploadRes.ok) throw new Error("Ses dosyası yüklenemedi");
 
-      const finalUrl = `/api/storage${objectPath}`;
+      const finalUrl = `${apiBase}/api/storage${objectPath}`;
       onVoiceNoteUrl(finalUrl);
     } catch (err: any) {
       Alert.alert("Hata", err.message || "Ses kaydı yüklenemedi");

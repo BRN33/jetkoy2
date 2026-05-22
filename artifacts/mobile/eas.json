@@ -10,7 +10,7 @@
         "buildType": "apk"
       },
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://e1031000-dd31-42fa-bd0f-2d319b7c4f04-00-d2h0xvszcvjy.sisko.replit.dev"
+        "EXPO_PUBLIC_API_URL": "https://jet-koy--marsbaran.replit.app"
       }
     },
     "production": {
@@ -18,7 +18,7 @@
         "buildType": "apk"
       },
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://e1031000-dd31-42fa-bd0f-2d319b7c4f04-00-d2h0xvszcvjy.sisko.replit.dev"
+        "EXPO_PUBLIC_API_URL": "https://jet-koy--marsbaran.replit.app"
       }
     }
   }

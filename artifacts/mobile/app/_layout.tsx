@@ -22,7 +22,11 @@ if (typeof Appearance.setColorScheme === "function") {
   Appearance.setColorScheme("dark");
 }
 
-if (process.env.EXPO_PUBLIC_DOMAIN) {
+// APK / production build: EXPO_PUBLIC_API_URL explicitly set in eas.json
+// Dev on Replit: EXPO_PUBLIC_DOMAIN injected by the dev script
+if (process.env.EXPO_PUBLIC_API_URL) {
+  setBaseUrl(process.env.EXPO_PUBLIC_API_URL);
+} else if (process.env.EXPO_PUBLIC_DOMAIN) {
   setBaseUrl(`https://${process.env.EXPO_PUBLIC_DOMAIN}`);
 }
 

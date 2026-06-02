@@ -56,6 +56,11 @@ export default function AdminScreen() {
     query: { queryKey: getAdminGetMessagesQueryKey(), refetchInterval: 10000 },
   });
 
+  const sortedMembers = useMemo(
+    () => users ? [...users].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()) : [],
+    [users]
+  );
+
   const addCreditsMutation = useAdminAddCredits();
   const setVipMutation = useAdminSetVip();
   const replyMutation = useAdminReplyMessage();
@@ -420,10 +425,7 @@ export default function AdminScreen() {
             </Text>
           </View>
           <FlatList
-            data={useMemo(
-              () => users ? [...users].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()) : [],
-              [users]
-            )}
+            data={sortedMembers}
             keyExtractor={(item) => item.id}
             contentContainerStyle={styles.list}
             ListEmptyComponent={

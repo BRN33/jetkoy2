@@ -57,7 +57,6 @@
   },
   "dependencies": {
     "expo-av": "^16.0.8",
-    "expo-notifications": "^55.0.23",
-    "expo-updates": "^56.0.15"
+    "expo-notifications": "^55.0.23"
   }
 }

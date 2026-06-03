@@ -469,6 +469,7 @@ function updateManifests(manifests, timestamp, baseUrl, assetsByHash) {
       exitWithError(`Malformed manifest for ${platform}`);
     }
 
+    manifest.runtimeVersion = "1.0.0";
     manifest.launchAsset.url = `${baseUrl}${basePath}/${timestamp}/_expo/static/js/${platform}/bundle.js`;
     manifest.launchAsset.key = `bundle-${timestamp}`;
     manifest.createdAt = new Date(

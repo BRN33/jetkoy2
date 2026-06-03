@@ -4,6 +4,12 @@
     "slug": "jetkoy",
     "version": "1.0.0",
     "orientation": "portrait",
+    "updates": {
+      "url": "https://jet-koy--marsbaran.replit.app",
+      "enabled": true,
+      "checkAutomatically": "ON_LOAD"
+    },
+    "runtimeVersion": "1.0.0",
     "icon": "./assets/images/icon.png",
     "scheme": "jetkoy",
     "userInterfaceStyle": "dark",
@@ -41,6 +47,7 @@
       ],
       "expo-font",
       "expo-web-browser",
+      "expo-updates",
       [
         "expo-av",
         {

@@ -31,7 +31,7 @@ import { useColors } from "@/hooks/useColors";
 import { Feather } from "@expo/vector-icons";
 import { useQueryClient } from "@tanstack/react-query";
 
-type AdminTab = "users" | "members";
+type AdminTab = "users" | "members" | "messages";
 type UserModal = "credits" | "send-message" | "edit" | null;
 
 interface ConversationUser {
@@ -343,10 +343,24 @@ export default function AdminScreen() {
           style={[styles.tab, activeTab === "members" && { borderBottomColor: colors.primary }]}
           onPress={() => setActiveTab("members")}
         >
-          <Feather name="users" size={16} color={activeTab === "members" ? colors.primary : colors.mutedForeground} />
+          <Feather name="list" size={16} color={activeTab === "members" ? colors.primary : colors.mutedForeground} />
           <Text style={[styles.tabText, { color: activeTab === "members" ? colors.primary : colors.mutedForeground }]}>
             Üyeler
           </Text>
+        </Pressable>
+        <Pressable
+          style={[styles.tab, activeTab === "messages" && { borderBottomColor: colors.primary }]}
+          onPress={() => setActiveTab("messages")}
+        >
+          <Feather name="message-circle" size={16} color={activeTab === "messages" ? colors.primary : colors.mutedForeground} />
+          <Text style={[styles.tabText, { color: activeTab === "messages" ? colors.primary : colors.mutedForeground }]}>
+            Mesajlar
+          </Text>
+          {totalUnread > 0 && (
+            <View style={[styles.badge, { backgroundColor: colors.destructive }]}>
+              <Text style={[styles.badgeText, { color: colors.destructiveForeground }]}>{totalUnread}</Text>
+            </View>
+          )}
         </Pressable>
       </View>
 
@@ -416,7 +430,7 @@ export default function AdminScreen() {
             )}
           />
         </>
-      ) : (
+      ) : activeTab === "members" ? (
         /* Members tab — all registered users sorted by newest */
         <>
           <View style={[styles.membersHeader, { borderBottomColor: colors.border }]}>
@@ -460,6 +474,63 @@ export default function AdminScreen() {
             )}
           />
         </>
+      ) : (
+        /* Messages tab — grouped by sender */
+        <FlatList
+          data={conversations}
+          keyExtractor={(item) => item.senderId}
+          contentContainerStyle={styles.list}
+          ListEmptyComponent={
+            <View style={styles.center}>
+              <Feather name="inbox" size={48} color={colors.mutedForeground} />
+              <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>Mesaj yok</Text>
+            </View>
+          }
+          renderItem={({ item: conv }) => {
+            const latest = conv.messages[0];
+            return (
+              <Pressable
+                style={({ pressed }) => [
+                  styles.convCard,
+                  {
+                    backgroundColor: colors.card,
+                    borderColor: conv.unreadCount > 0 ? colors.primary : colors.border,
+                    borderRadius: colors.radius,
+                    opacity: pressed ? 0.85 : 1,
+                  },
+                ]}
+                onPress={() => setOpenConversation(conv)}
+              >
+                <View style={styles.convHeader}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.senderName, { color: colors.foreground }]}>{conv.senderName}</Text>
+                    <Text style={[styles.senderInfo, { color: colors.mutedForeground }]}>
+                      {conv.senderPhone} · {conv.senderPlate}
+                    </Text>
+                  </View>
+                  <View style={styles.convMeta}>
+                    {conv.unreadCount > 0 && (
+                      <View style={[styles.badge, { backgroundColor: colors.primary }]}>
+                        <Text style={[styles.badgeText, { color: colors.primaryForeground }]}>{conv.unreadCount}</Text>
+                      </View>
+                    )}
+                    <Text style={[styles.convCount, { color: colors.mutedForeground }]}>
+                      {conv.messages.length} mesaj
+                    </Text>
+                  </View>
+                </View>
+                {latest && (
+                  <Text style={[styles.convPreview, { color: colors.mutedForeground }]} numberOfLines={2}>
+                    {latest.content}
+                  </Text>
+                )}
+                <Text style={[styles.convTime, { color: colors.mutedForeground }]}>
+                  {latest ? new Date(latest.createdAt).toLocaleString("tr-TR") : ""}
+                </Text>
+              </Pressable>
+            );
+          }}
+        />
       )}
 
       {/* Conversation detail modal */}
